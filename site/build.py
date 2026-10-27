@@ -35,8 +35,9 @@ def main():
         tag = "a" if ready else "div"
         href = f' href="{path}/"' if ready else ""
         status = f'<span class="status">{html.escape(p["status"])}</span>' if p.get("status") else ""
-        cards.append(f'<{tag} class="card"{href}><h2>{html.escape(p["title"])}{status}</h2>'
-                     f'<p>{html.escape(p.get("description", ""))}</p></{tag}>')
+        desc = f'<p>{html.escape(p["description"])}</p>' if p.get("description") else ""  # optional
+        arrow = '<span class="go" aria-hidden="true">→</span>' if ready else ""
+        cards.append(f'<{tag} class="card"{href}><h2>{html.escape(p["title"])}{status}</h2>{desc}{arrow}</{tag}>')
     fill = {"{{title}}": html.escape(cfg["site"]["title"]), "{{tagline}}": html.escape(cfg["site"]["tagline"]),
             "{{projects}}": "\n      ".join(cards), "{{project_paths}}": json.dumps(built)}
     for name in ("index.html", "404.html"):

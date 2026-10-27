@@ -8,7 +8,6 @@ own path.
 |---|---|---|
 | `/` | Landing page (generated) | `site/` + `projects.json` |
 | `/hotnets26-poster/` | HotNets 2026 interactive poster, and the paper poster at `/poster/` | `hotnets-posters/` (built to `dist/`) |
-| `/hotnets26-demo/` | Interactive demo for the HotNets 2026 paper | `hotnets-artifact/web/` |
 | `/hotnets26-demo-video/` | Two-minute demo video | `hotnets26-demo-video/` |
 | `/datasets/` | Measurement data (coming soon) | — |
 
@@ -27,7 +26,7 @@ qr/                    ← QR code to /hotnets26-poster/, the interactive poster
 ```bash
 (cd hotnets-posters && deno install && deno task build)
 python3 site/build.py && python3 -m http.server -d _site 8000
-# http://localhost:8000/  ·  /hotnets26-poster/  ·  /hotnets26-demo/  ·  /hotnets26-demo-video/
+# http://localhost:8000/  ·  /hotnets26-poster/  ·  /hotnets26-demo-video/
 ```
 
 ## Deploy (once)

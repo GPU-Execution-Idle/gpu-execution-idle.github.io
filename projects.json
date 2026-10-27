@@ -1,31 +1,22 @@
 {
   "site": {
     "title": "GPU Execution-Idle",
-    "tagline": "Research on GPU power while AI agents wait: talks, demos and data."
+    "tagline": "Research on addressing energy/power inefficiency of GPU execution‑idle"
   },
   "projects": [
     {
       "path": "hotnets26-poster",
-      "title": "The Network Should Wake the GPU",
-      "description": "Interactive poster for our HotNets 2026 paper, plus the printable paper poster.",
+      "title": "Poster",
       "source": "hotnets-posters/dist"
     },
     {
-      "path": "hotnets26-demo",
-      "title": "Interactive demo",
-      "description": "Hands-on demo: explore GPU execution-idle and build your own power controller.",
-      "source": "hotnets-artifact/web"
-    },
-    {
       "path": "hotnets26-demo-video",
-      "title": "HotNets 2026 demo video",
-      "description": "Two-minute animated pitch.",
+      "title": "Video",
       "source": "hotnets26-demo-video"
     },
     {
       "path": "datasets",
-      "title": "Measurement dataset",
-      "description": "GPU power and agent traces from our measurements.",
+      "title": "Dataset",
       "status": "coming soon"
     }
   ]
