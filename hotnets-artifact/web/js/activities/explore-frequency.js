@@ -80,7 +80,7 @@ export function frequencyPages(ctx) {
       const unlocked = LOWERED.some((k) => st.freqTried.includes(k));
       // The answer appears once a lowered setting is picked and quotes that setting's saving.
       const low = answerKey(st.freqLowered, st.freqTried);
-      answer.replaceChildren(...(low ? [answerStrip(setting(low), ' cuts idle power by ', hlValue(`${byKey.ready.powerW - byKey[low].powerW} W`, 'good'), ', with the model still loaded.')] : []));
+      answer.replaceChildren(...(low ? [answerStrip('Yes. ', setting(low), ' cuts idle power by ', hlValue(`${byKey.ready.powerW - byKey[low].powerW} W`, 'good'), ', with the model still loaded.')] : []));
       nav.replaceChildren(ctx.nav({ enabled: unlocked, hint: 'Try a lower-frequency setting to continue.' }));
     };
     update();
@@ -187,7 +187,7 @@ export function frequencyPages(ctx) {
     return [
       questionCard(
         h('h1', {}, 'Can raising frequency early avoid putting transition overhead to workload?'),
-        wakeKey ? answerStrip('Waking from ', setting(wakeKey), ' ', hlValue(ms(D.wakeLeadS[wakeKey])), ' early matches ', setting('ready'), ' performance.') : null,
+        wakeKey ? answerStrip('Yes. Waking from ', setting(wakeKey), ' ', hlValue(ms(D.wakeLeadS[wakeKey])), ' early matches ', setting('ready'), ' performance.') : null,
         settingNote(),
         buttons),
       h('div', { class: 'bar-chart' }, chart),
@@ -234,7 +234,7 @@ function leadSvg(raised, animKey, f) {
   const xWork = 196, xEnd = W - 8;                  // inference spans [xWork, xEnd] (schematic)
   const x = (t) => L + ((t - T0) / -T0) * (xWork - L); // to scale for t ≤ 0
   const ROW = 58, TOP = 16;
-  const rows = [{ key: 'ready', title: 'Default' },
+  const rows = [{ key: 'ready', title: 'Default (no scaling)' },
     { key: 'sm', title: 'SM at minimum' }, { key: 'smMem', title: 'SM + memory at minimum' }];
   const o = [];
   rows.forEach((r, i) => {

@@ -38,7 +38,7 @@ export function idlePages(ctx) {
       questionCard(
         h('h1', {}, 'Does 0% utilization mean low power?'),
         h('p', {}, `Two identical ${P.gpu} GPUs, neither running any work. A has no program loaded; B has an inference engine loaded. Which uses more power?`),
-        revealed ? answerStrip('At 0% utilization, ', hlSetting('ready', 'Inference engine loaded'), ' draws ', hlValue(`${P.execIdleW} W`),
+        revealed ? answerStrip('No. At 0% utilization, ', hlSetting('ready', 'Inference engine loaded'), ' draws ', hlValue(`${P.execIdleW} W`),
           ', vs. ', hlValue(`${P.trueIdleW} W`), ' for ', hlSetting('trueidle', 'No program loaded'), '.') : null,
         h('div', { class: 'three' }, choice('A', 'A'), choice('same', 'About the same'), choice('B', 'B'))),
       h('div', { class: 'gpu-pair' },
@@ -75,8 +75,8 @@ export function idlePages(ctx) {
     const card = questionCard(
       h('h1', {}, 'How can a GPU know when work returns, so it can wake early?'),
       h('p', { class: 'prompt' }, `Imagine you’re the GPU: your agent is making a tool call, and you’ve had no work for ${D.zeroUtilForS} seconds. From utilization alone, can you tell how much longer you’ll wait?`),
-      st.cantTell ? answerStrip('Utilization alone can’t tell. External context can help predict when work returns.')
-        : guess ? answerStrip('Counterexample: after the same ', hlValue(`${D.zeroUtilForS} s`), ' idle, this GPU waited ',
+      st.cantTell ? answerStrip('No. Utilization alone can’t tell. External context can help predict when work returns.')
+        : guess ? answerStrip('No. Counterexample: after the same ', hlValue(`${D.zeroUtilForS} s`), ' idle, this GPU waited ',
           hlValue(`${D.executions[guess.execution].nextWorkInS.toFixed(1)} s`), ' more.', left ? ' Try another answer.' : '')
         : null);
     const out = [card];
