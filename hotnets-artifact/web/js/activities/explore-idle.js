@@ -21,7 +21,7 @@ export function idlePages(ctx) {
       h('div', { class: 'gpu-card' },
         h('div', { class: 'gpu-head' }, h('span', { class: 'gpu-letter' }, letter),
           revealed ? h('span', { class: 'gpu-state' }, name) : h('span', { class: 'gpu-name' }, P.gpu)),
-        h('div', { class: 'small muted' }, desc),
+        h('div', { class: 'gpu-desc muted' }, desc),
         h('div', { class: 'gpu-util' }, h('span', { class: 'small muted' }, 'Utilization'), h('b', {}, '0%')),
         revealed ? null : h('div', { class: 'gpu-util' }, h('span', { class: 'small muted' }, 'Power'), h('b', {}, '? W'))),
       revealed ? h('div', { class: 'vbar-wrap' },

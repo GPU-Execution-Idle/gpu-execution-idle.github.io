@@ -402,3 +402,8 @@ svg.tl .strip-idle { fill: var(--c-tool); }
 .q-card .choices, .q-card .three, .q-card .seg { margin: 10px 0 0; }
 .q-card .choice { background: var(--bg); }
 .q-card .choice[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 12%, var(--bg)); }
+
+/* Step 1 cards: keep "No program loaded" / "Inference engine loaded" on one line on phones.
+   The label shrinks with the screen, up to the normal size, so the longer one always fits. */
+.gpu-pair .gpu-card { padding-left: 10px; padding-right: 10px; }
+.gpu-desc { white-space: nowrap; font-size: min(.88rem, calc((50vw - 48px) / 11.8)); }
