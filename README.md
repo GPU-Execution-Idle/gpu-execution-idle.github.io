@@ -17,6 +17,7 @@ site/build.py          ← assembles _site/ from projects.json; landing + 404 te
 .github/workflows/     ← tests, builds and deploys on every push to main
 hotnets-artifact/      ← interactive demo (see its README)
 hotnets26-demo-video/  ← the published video page, MP4 and poster
+qr/                    ← QR code to the interactive demo (SVG + PNG; not published as a page)
 ```
 
 ## Preview locally
