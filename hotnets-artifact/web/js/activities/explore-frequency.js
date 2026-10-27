@@ -252,11 +252,11 @@ function leadSvg(raised, animKey, f) {
   const base = TOP + 3 * ROW;
   o.push(`<line x1="${xWork}" x2="${xWork}" y1="${TOP + 6}" y2="${base - 8}" style="stroke:var(--text);stroke-width:2"/>`,
     `<path d="M${xWork - 5},${base} L${xWork + 5},${base} L${xWork},${base - 7} Z" style="fill:var(--text)"/>`,
-    `<text x="${xWork}" y="${base + 14}" text-anchor="middle" style="font-weight:800">work starts</text>`);
+    `<text x="${xWork}" y="${base + 24}" text-anchor="middle" style="font-weight:800">work starts on an L40S GPU</text>`);
   for (const t of [-0.3, -0.2, -0.1]) o.push(`<text class="lab" x="${x(t)}" y="${base + 4}" text-anchor="middle">−${Math.round(-t * 1000)}${t === -0.1 ? ' ms' : ''}</text>`);
   const label = ['Default: inference starts when work starts.',
     ...LOWERED.filter((k) => raised.includes(k)).map((k) => `${byKey[k].label}: raise frequency ${ms(D.wakeLeadS[k])} before work starts; inference matches the default.`)].join(' ');
-  return `<svg class="tl lead-chart" viewBox="0 0 ${W} ${base + 20}" role="img" aria-label="${esc(label)}">${o.join('')}</svg>`;
+  return `<svg class="tl lead-chart" viewBox="0 0 ${W} ${base + 30}" role="img" aria-label="${esc(label)}">${o.join('')}</svg>`;
 }
 
 // ---------------- Icons ----------------
