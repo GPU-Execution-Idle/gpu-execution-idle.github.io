@@ -1,0 +1,274 @@
+/* Interactive poster. At rest: title, control-loop contrast and three claims. Hovering a claim
+   reveals its questions; opening one shows its answer card and dims everything else. Sizes follow
+   the viewport height too, so it fits a projector or laptop without scrolling. */
+
+.web { --gutter: clamp(16px, 4vw, 72px); --measure: 1600px; --ease: cubic-bezier(.2, .7, .2, 1); min-height: 100dvh; overflow-x: clip; }
+.web > * { padding-inline: max(var(--gutter), calc((100% - var(--measure)) / 2)); }
+
+/* ---------- Banner ---------- */
+.banner { position: relative; text-align: center; padding-block: clamp(14px, 3.4vh, 44px) clamp(4px, 1vh, 12px); }
+.banner h1 {
+  margin: 0;
+  font-family: var(--f-display); font-weight: 820;
+  font-size: clamp(1.8rem, min(4.2vw, 6.4vh), 4.6rem); line-height: 1; letter-spacing: -.045em;
+}
+.banner h1 em { font-style: normal; color: var(--accent); }
+
+/* ---------- Control-loop contrast (folds away while an answer is open) ---------- */
+.contrast { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .5s var(--ease), opacity .35s; }
+.web.focus .contrast { grid-template-rows: 0fr; opacity: 0; }
+.contrast-inner { overflow: hidden; min-height: 0; }
+.loops { display: flex; justify-content: center; align-items: center; gap: clamp(8px, 4vw, 80px); padding-block: clamp(8px, 2.6vh, 32px) clamp(4px, 1vh, 12px); }
+.loop-panel { margin: 0; }
+.loop-panel svg { display: block; height: clamp(140px, 29vh, 330px); width: auto; overflow: visible; }
+/* The arrow sits level with the loops' centers, above the captions. */
+.loops-vs { font-family: var(--f-display); font-size: clamp(1.6rem, 5vh, 3.2rem); color: #c9c3d3; margin-bottom: 2.4vh; }
+.loop-panel .loop-arc { fill: none; stroke-width: 3; }
+.loop-panel .local .loop-arc { stroke: #b3adbf; }
+.loop-panel .local .loop-head { fill: #b3adbf; }
+.loop-panel .system .loop-arc { stroke: var(--accent); }
+.loop-panel .system .loop-head { fill: var(--accent); }
+.loop-panel .chip { fill: #5c5869; stroke: var(--paper); stroke-width: 2; }
+.loop-panel .chip-pins { stroke: var(--ink-2); stroke-width: 2; }
+.loop-panel .chip-label { fill: #fff; font: 700 13px var(--f-text); }
+.loop-panel .loop-caption { fill: var(--muted); font: 650 15px var(--f-text); }
+.loop-panel .late-text { fill: #9a94a8; font: 700 13px var(--f-text); }
+.loop-panel .late-mark { stroke: #b3adbf; stroke-width: 2.4; stroke-linecap: round; }
+.loop-panel .loop-caption.strong { fill: var(--accent); font-weight: 750; }
+.loop-panel .src-label { fill: var(--ink); font: 650 13px var(--f-text); }
+.loop-panel .src-box { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+.loop-panel .src-icon * { fill: none; stroke: var(--accent); stroke-width: 1.6; }
+.loop-panel .signal { stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 6 6; }
+.loop-panel .wake-badge { fill: var(--accent); }
+.loop-panel .wake-text { fill: #fff; font: 800 14px var(--f-text); }
+/* System-wide loop, one 5 s cycle: GPU dim (off) → packets arrive → GPU bright (on), ready → reset.
+   Without motion, it shows the final state: GPU on and ready. */
+.loop-panel .signal { opacity: .45; }
+.loop-panel .packet { fill: var(--accent); offset-rotate: 0deg; opacity: 0; }
+.loop-panel .sys-chip { fill: var(--accent); }
+.loop-panel .gpu-glow { fill: var(--accent); opacity: .16; }
+.loop-panel .ready-text { fill: var(--accent); font: 750 13px var(--f-text); }
+.loop-panel .ready-tick { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.loop-panel .wake-badge, .loop-panel .wake-text { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .loop-panel .loop { animation: loop-spin 14s linear infinite; }
+  .loop-panel .signal { animation: signal-flow 1s linear infinite; }
+  .loop-panel .packet { animation: packet 5s var(--ease, ease) infinite; }
+  .loop-panel .packet.p1 { animation-delay: .12s; }
+  .loop-panel .packet.p2 { animation-delay: .24s; }
+  .loop-panel .sys-chip { animation: gpu-wake 5s ease infinite; }
+  .loop-panel .sys-chip + .chip-label { animation: gpu-label 5s ease infinite; }
+  .loop-panel .gpu-glow { animation: gpu-glow 5s ease infinite; }
+  .loop-panel .wake-badge, .loop-panel .wake-text { animation: wake-flash 5s ease infinite; }
+  .loop-panel .ready { animation: ready 5s ease infinite; }
+}
+@media (prefers-reduced-motion: reduce) { .loop-panel .wake-badge, .loop-panel .wake-text { opacity: 1; } }
+@keyframes loop-spin { to { transform: rotate(360deg); } }
+@keyframes signal-flow { to { stroke-dashoffset: -12; } }
+@keyframes packet {
+  0%, 14% { offset-distance: 0%; opacity: 0; }
+  18% { offset-distance: 0%; opacity: 1; }
+  40% { offset-distance: 100%; opacity: 1; }
+  44%, 100% { offset-distance: 100%; opacity: 0; }
+}
+@keyframes gpu-wake { 0%, 40% { fill: #d6d2de; } 48%, 86% { fill: var(--accent); } 96%, 100% { fill: #d6d2de; } }
+@keyframes gpu-label { 0%, 40% { fill: #8f8a9c; } 48%, 86% { fill: #fff; } 96%, 100% { fill: #8f8a9c; } }
+@keyframes gpu-glow { 0%, 42% { opacity: 0; transform: scale(.9); } 52% { opacity: .28; transform: scale(1.06); } 60%, 84% { opacity: .16; transform: scale(1); } 94%, 100% { opacity: 0; } }
+@keyframes wake-flash { 0%, 36% { opacity: 0; } 42%, 62% { opacity: 1; } 70%, 100% { opacity: 0; } }
+@keyframes ready { 0%, 50% { opacity: 0; transform: translateX(-6px); } 58%, 86% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; } }
+.loop-panel .gpu-glow { transform-box: fill-box; transform-origin: center; }
+
+/* ---------- Claims ---------- */
+.claims { padding-top: clamp(14px, 4vh, 48px); padding-bottom: clamp(16px, 3vh, 40px); }
+@media (min-width: 900px) {
+  .claims {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto;
+    column-gap: clamp(36px, 5vw, 110px); align-content: start;
+    transition: grid-template-columns .5s var(--ease);
+  }
+  /* Headlines share a row, so all three question lists start at the same height. While an answer
+     is open, each column lays out on its own so the open question sits right under its headline. */
+  .claim { display: grid; grid-row: span 2; grid-template-rows: subgrid; }
+  .web.focus .claim { grid-template-rows: auto 1fr; align-content: start; }
+  /* The open claim widens; the others step back. */
+  .web.focus[data-focus='c1'] .claims { grid-template-columns: 2.3fr 1fr 1fr; }
+  .web.focus[data-focus='c2'] .claims { grid-template-columns: 1fr 2.3fr 1fr; }
+  .web.focus[data-focus='c3'] .claims { grid-template-columns: 1fr 1fr 2.3fr; }
+}
+@media (max-width: 899px) { .claim + .claim { margin-top: 36px; } }
+
+.claim { transition: opacity .35s, filter .35s; }
+.claim.dimmed { opacity: .2; filter: grayscale(1); cursor: pointer; }
+/* Head fills its row, so the question hints line up across the three claims. */
+.claim-head { display: flex; flex-direction: column; align-items: flex-start; padding-top: clamp(4px, 1vh, 12px); }
+.q-hint { margin-top: auto; }
+.claim-no { font-size: clamp(.68rem, 1.5vh, .82rem); letter-spacing: .24em; color: var(--accent); }
+.claim h2 {
+  margin: clamp(6px, 1.2vh, 12px) 0 clamp(8px, 1.6vh, 18px);
+  font-family: var(--f-display); font-weight: 790;
+  font-size: clamp(1.6rem, min(2.9vw, 5.5vh), 3.8rem); line-height: 1.02; letter-spacing: -.035em; text-wrap: balance;
+}
+.q-hint {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: .74rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted); transition: opacity .25s;
+}
+.q-hint::after { content: '↓'; letter-spacing: 0; }
+
+/* Questions appear on hover or keyboard focus (a tap on touch screens), and stay for the open claim. */
+.q-wrap { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .35s var(--ease), opacity .25s; }
+.q-wrap > .questions { overflow: hidden; min-height: 0; }
+.claim:is(:hover, :focus-within, .peek, .focused):not(.dimmed) .q-wrap { grid-template-rows: 1fr; opacity: 1; }
+.claim:is(:hover, :focus-within, .peek, .focused):not(.dimmed) .q-hint { opacity: 0; }
+.web.focus .q-hint { opacity: 0; }
+@media (hover: none), (max-width: 899px) { .q-wrap { grid-template-rows: 1fr; opacity: 1; } .q-hint { display: none; } }
+
+.questions { list-style: none; margin: 0; padding: 0; }
+.question { border-bottom: 1px solid var(--rule); scroll-margin: 12px; }
+.question:first-child { border-top: 1px solid var(--rule); }
+.question.hidden { display: none; }
+.question.open { border-bottom: 0; }
+.question h3 { margin: 0; font: inherit; }
+.q-row {
+  width: 100%; display: grid; grid-template-columns: 2.4em 1fr 18px; align-items: baseline; gap: 10px;
+  padding: clamp(7px, 1.45vh, 18px) 0; border: 0; background: none; cursor: pointer; text-align: left;
+}
+.q-no { font-family: var(--f-mono); font-weight: 700; font-size: clamp(.78rem, 1.7vh, .95rem); color: var(--accent); }
+.q-text {
+  font-family: var(--f-display); font-weight: 650;
+  font-size: clamp(1rem, min(1.3vw, 2.5vh), 1.35rem); line-height: 1.2; letter-spacing: -.012em;
+  transition: color .2s;
+}
+.question.open .q-text { font-size: clamp(1.15rem, min(1.6vw, 3vh), 1.6rem); }
+.q-row:hover .q-text, .question.open .q-text { color: var(--accent); }
+.q-icon { position: relative; width: 18px; height: 18px; align-self: center; }
+.q-icon::before, .q-icon::after {
+  content: ''; position: absolute; left: 1px; right: 1px; top: 8px; height: 2.5px; border-radius: 2px;
+  background: currentColor; transition: transform .3s;
+}
+.q-icon::after { transform: rotate(90deg); }
+.question.open .q-icon::after { transform: rotate(0deg); }
+
+/* ---------- Answer card ---------- */
+.answer { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .32s var(--ease); }
+.question.open .answer { grid-template-rows: 1fr; }
+.answer-inner { overflow: hidden; min-height: 0; }
+.answer-card {
+  position: relative;
+  margin: 0 0 clamp(8px, 1.4vh, 18px); padding: clamp(12px, 2vh, 22px) clamp(16px, 1.6vw, 26px) clamp(10px, 1.6vh, 18px);
+  background: var(--plate); border: 1px solid var(--rule); border-radius: 14px;
+  box-shadow: 0 1px 2px rgb(20 16 30 / .05), 0 16px 40px -20px rgb(20 16 30 / .3);
+}
+.card-close {
+  position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; padding: 0; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--paper); font-size: 1.25rem; line-height: 1; color: var(--ink-2); cursor: pointer;
+}
+.card-close:hover { border-color: var(--ink-2); color: var(--ink); }
+.takeaway {
+  margin: 0 40px clamp(8px, 1.4vh, 14px) 0;
+  font-family: var(--f-display); font-weight: 720;
+  font-size: clamp(1.05rem, min(1.45vw, 2.7vh), 1.5rem); line-height: 1.22; letter-spacing: -.015em;
+}
+.answer-card:not(:has(.fig)) .takeaway { margin-bottom: 4px; font-size: clamp(1.15rem, min(1.7vw, 3vh), 1.7rem); }
+
+/* Figure buttons, like the answers in the interactive demo. */
+/* One row of buttons; a long label wraps inside its button instead of adding a row. */
+.fig-seg { display: flex; gap: 6px; margin-bottom: clamp(6px, 1.2vh, 12px); }
+.fig-seg button {
+  flex: 0 1 auto; min-width: 0; min-height: 32px; padding: 3px 12px; border-radius: 16px; border: 1.5px solid var(--rule); background: var(--paper);
+  font-size: .8rem; font-weight: 650; line-height: 1.15; cursor: pointer;
+}
+.fig-seg button:hover { border-color: var(--ink-2); }
+.fig-seg button[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+/* Figure drawing. Text sizes are in figure units (the viewBox is 400 wide). */
+.fig svg { width: 100%; height: auto; max-height: 34vh; overflow: visible; }
+@media (max-height: 820px) { .fig svg { max-height: 30vh; } }
+.fig text { font-family: var(--f-text); font-size: 12.5px; fill: var(--ink-2); }
+.fig .val { fill: var(--ink); font-weight: 600; }
+.fig .strong { font-weight: 750; fill: var(--ink); }
+.fig .head { font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted); }
+.fig .small { font-size: 10.5px; fill: var(--muted); }
+.fig .in { fill: var(--ink); font-size: 11px; font-weight: 650; }
+.fig .in.light { fill: #fff; }
+.fig .good-t { fill: var(--good); }
+.fig .bad-t { fill: var(--bad); }
+.fig .axis { stroke: var(--ink-2); stroke-width: 1; }
+.fig .bar { stroke: none; }
+.fig .bar.true-idle { fill: #3aa76d; }
+.fig .bar.agent { fill: var(--signal); }
+.fig .bar.good { fill: #3aa76d; }
+.fig .bar.bad { fill: #d0574f; }
+.fig .bar.ink { fill: var(--ink); }
+.fig .sized { transition: width .45s cubic-bezier(.2, .7, .2, 1); }
+.fig .grow { transform-box: fill-box; transform-origin: bottom; transform: scaleY(0); opacity: 0; transition: transform .45s cubic-bezier(.2, .7, .2, 1), opacity .2s; }
+.fig .grow.on { transform: scaleY(1); opacity: 1; }
+
+.fig-placeholder {
+  display: grid; gap: 6px; min-height: 140px; align-content: center; padding: 16px; border-radius: 10px;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 55%, var(--rule));
+  background: repeating-linear-gradient(135deg, transparent 0 12px, color-mix(in srgb, var(--accent) 5%, transparent) 12px 13px);
+}
+.fig-placeholder .label { font-size: .66rem; letter-spacing: .2em; color: var(--accent); }
+.fig-placeholder p { margin: 0; color: var(--ink-2); }
+
+/* Short screens (e.g. 1280×720 projectors): a little more compact. */
+@media (max-height: 820px) and (min-width: 900px) {
+  .fig-seg button { min-height: 28px; font-size: .76rem; }
+  .claim h2 { font-size: clamp(1.4rem, min(2.6vw, 4.4vh), 3rem); }
+}
+
+/* Tiny full-screen toggle in the banner's top-right corner. */
+.fs-toggle {
+  position: absolute; top: clamp(10px, 2vh, 24px); right: max(var(--gutter), calc((100% - var(--measure)) / 2));
+  width: 34px; height: 34px; display: grid; place-items: center; padding: 0;
+  border: 1px solid var(--rule); border-radius: 8px; background: transparent; color: var(--ink-2); cursor: pointer; opacity: .55;
+  transition: opacity .2s, border-color .2s;
+}
+.fs-toggle:hover, .fs-toggle:focus-visible { opacity: 1; border-color: var(--ink-2); }
+.fs-toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* New figure parts */
+.fig .tiny { font-size: 9.5px; }
+.fig .bracket { stroke: var(--muted); stroke-width: 1; }
+.fig .track { fill: var(--paper-2); }
+.fig .bar.exec { fill: var(--accent); }
+.fig .bar.exec-soft { fill: #c3b8f5; }
+.fig .exec-t { fill: var(--accent); }
+.fig .grid { stroke: var(--rule); stroke-width: 1; }
+.fig .ref { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.fig .ln { fill: none; stroke-width: 2.2; }
+.fig .ln.browse { stroke: var(--accent); }
+.fig .ln.swe { stroke: var(--ink-2); stroke-dasharray: 5 3; }
+.fig .pt.browse { fill: var(--accent); }
+.fig .browse-t { fill: var(--accent); font-weight: 650; }
+.fig .swe-t { fill: var(--ink-2); font-weight: 650; }
+.fig .pt.swe { fill: var(--ink-2); }
+.fig .bar.infer { fill: #d99a0b; }
+.fig .bar.tool { fill: #8c9196; }
+.fig .work-line { stroke: var(--ink); stroke-width: 1.6; }
+.fig .axis.faint { stroke: var(--rule); }
+.fig .lead-row .row-title { transition: opacity .3s; }
+.fig .lead-row.ready .row-title { fill: #2f62d0; }
+.fig .lead-row.sm { --c: #2a9d8f; }
+.fig .lead-row.smMem { --c: #7b5cd6; }
+.fig .lead-row.sm .row-title, .fig .lead-row.smMem .row-title, .fig .lead-t { fill: var(--c); }
+.fig .lead { stroke: var(--c); stroke-width: 3; }
+.fig .lead-head, .fig .lead-dot { fill: var(--c); }
+.fig .lead-row.dim { opacity: .28; }
+.fig .lead-row { transition: opacity .3s; }
+.fig .lead-grow { transform-box: fill-box; transform-origin: right; animation: lead-grow .7s cubic-bezier(.2, .7, .2, 1); }
+@keyframes lead-grow { from { transform: scaleX(0); } }
+.fig .pt { stroke: #222; stroke-width: 1; cursor: pointer; transition: transform .15s; transform-box: fill-box; transform-origin: center; outline: none; }
+.fig .pt.sm, .fig .bar.sm-f { fill: #2a9d8f; }
+.fig .pt.smMem, .fig .bar.smMem-f { fill: #7b5cd6; }
+.fig .pt.neutral { fill: #c9c6cf; cursor: default; }
+.fig .pt.hot, .fig .pt:focus-visible { transform: scale(1.35); stroke-width: 2; }
+.fig .trail { fill: none; stroke-width: 1.4; stroke-dasharray: 4 3; opacity: .7; }
+.fig .trail.sm { stroke: #2a9d8f; }
+.fig .trail.smMem { stroke: #7b5cd6; }
+.fig .star { fill: var(--ink); }
+.fig .tip rect { fill: var(--ink); }
+.fig .tip text { fill: var(--paper); }
+.fig .tip .good-t { fill: #7ee2a8; }
+.fig .tip .bad-t { fill: #ff9c94; }
+.fig .both { fill: var(--ink); font-weight: 650; }

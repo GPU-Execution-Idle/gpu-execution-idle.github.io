@@ -20,6 +20,9 @@ jobs:
       - name: Test the interactive demo
         working-directory: hotnets-artifact
         run: deno test --allow-read=. tests/
+      - name: Build the HotNets posters
+        working-directory: hotnets-posters
+        run: deno install && deno task build
       - name: Assemble the site from projects.json
         run: python3 site/build.py
       - uses: actions/configure-pages@v5

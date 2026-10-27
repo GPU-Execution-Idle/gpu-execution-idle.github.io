@@ -1,0 +1,48 @@
+/* Shared design tokens for both posters: warm paper, near-black ink, one violet accent. */
+:root {
+  --paper: #f3f0e8;
+  --paper-2: #ebe7dc;
+  --plate: #ffffff;
+  --ink: #15121d;
+  --ink-2: #4a4458;
+  --muted: #7a7487;
+  --rule: #d6d0c3;
+  --accent: #5a3fd6;
+  --accent-soft: #e6e0fb;
+  --signal: #0f8f8a;
+  --good: #1d7f4e;
+  --bad: #b4322b;
+
+  --f-display: 'Inter Tight Variable', 'Inter Tight', system-ui, sans-serif;
+  --f-text: 'Inter Variable', Inter, system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-text);
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+}
+img, svg { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+/* Small mono label used for "HOTNETS 2026", "CLAIM #1", "Q1", "SOURCE". */
+.label {
+  font-family: var(--f-mono);
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0s !important; animation-duration: 0s !important; scroll-behavior: auto !important; }
+}

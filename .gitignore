@@ -11,3 +11,8 @@ Transition.md
 # hotnets-artifact: the raw L40S traces are ~10 GB (publish data via Releases/Zenodo, see README)
 hotnets-artifact/trace/
 hotnets-artifact/trace-analysis/raw/
+
+# hotnets-posters: installed packages and build/export output (PDFs come from `deno task pdf`)
+hotnets-posters/node_modules/
+hotnets-posters/dist/
+hotnets-posters/pdf/

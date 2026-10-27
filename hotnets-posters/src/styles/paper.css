@@ -1,0 +1,104 @@
+/* Paper poster. The sheet is a size container; --u is 1% of the width of a 2:3 sheet that fits
+   inside it, so type keeps the same proportions on 24×36 (2:3) and 36×48 (3:4) sheets. */
+
+.paper-view { min-height: 100dvh; background: var(--paper-2); }
+
+.paper-tools {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+  padding: 10px 20px; background: color-mix(in srgb, var(--paper-2) 88%, transparent);
+  backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule);
+  font-size: .9rem;
+}
+.paper-tools > a { margin-right: auto; font-weight: 600; text-decoration: none; }
+.paper-tools > a:hover { color: var(--accent); }
+.paper-tools button {
+  min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--rule);
+  background: var(--paper); cursor: pointer; font-weight: 600;
+}
+.paper-tools button:hover { border-color: var(--ink-2); }
+.paper-tools .seg { display: flex; gap: 4px; padding: 3px; border-radius: 999px; background: var(--paper); border: 1px solid var(--rule); }
+.paper-tools .seg button { border: 0; min-height: 30px; background: transparent; }
+.paper-tools .seg button[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
+
+.stage { display: grid; place-items: center; padding: 28px 16px 48px; }
+.stage:fullscreen { padding: 0; background: #0f0d14; }
+
+.sheet {
+  /* Fit the whole sheet on screen: limited by width, or by height for tall sheets. */
+  width: min(calc(100vw - 32px), calc((100dvh - 120px) * var(--ar, .6667)), 1100px);
+  container-type: size;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgb(20 16 30 / .08), 0 24px 60px -20px rgb(20 16 30 / .35);
+  overflow: hidden;
+  print-color-adjust: exact; -webkit-print-color-adjust: exact;
+}
+.stage:fullscreen .sheet { width: min(100vw, calc(100dvh * var(--ar, .6667))); box-shadow: none; }
+/* On phones, use the full width and let the page scroll. */
+@media (max-width: 640px) {
+  .sheet { width: calc(100vw - 24px); }
+  .stage { padding: 16px 12px 32px; }
+  .paper-tools { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 8px 12px; }
+  .paper-tools::-webkit-scrollbar { display: none; }
+  .paper-tools > * { flex: none; }
+  .paper-tools > a { margin-right: 4px; }
+}
+
+.sheet > * { --u: min(1cqw, calc(100cqh / 150)); flex-shrink: 0; }
+.sheet {
+  display: flex; flex-direction: column;
+}
+.p-head, .p-trace, .p-claims, .p-foot { margin-inline: calc(var(--u) * 7); }
+
+.p-head { padding-top: calc(var(--u) * 6); }
+.p-venue {
+  margin: 0 0 calc(var(--u) * 3.2);
+  font-size: calc(var(--u) * 1.9); letter-spacing: .32em; color: var(--ink-2);
+}
+.p-title {
+  margin: 0;
+  font-family: var(--f-display); font-weight: 820;
+  font-size: calc(var(--u) * 11.2); line-height: .9; letter-spacing: -.045em;
+}
+.p-title em { font-style: normal; color: var(--accent); }
+
+.p-trace { height: calc(var(--u) * 7.5); width: auto; margin-block: calc(var(--u) * 3.4) calc(var(--u) * 3.6); }
+.p-trace :is(.trace-run, .trace-wait, .trace-wake) { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+/* Stroke widths follow the sheet size, so the line keeps its weight in print. */
+.p-trace :is(.trace-run, .trace-wait) { stroke: var(--ink); stroke-width: calc(var(--u) * .42); }
+.p-trace .trace-wake { stroke: var(--accent); stroke-width: calc(var(--u) * .6); }
+.p-trace .trace-floor { stroke: var(--muted); stroke-width: calc(var(--u) * .26); stroke-dasharray: calc(var(--u) * .7) calc(var(--u) * 1.1); vector-effect: non-scaling-stroke; }
+.p-trace .trace-dot { fill: var(--accent); }
+
+.p-claims { list-style: none; padding: 0; margin-block: auto calc(var(--u) * 5); display: grid; gap: calc(var(--u) * 5.6); }
+
+.p-claim-no { display: block; font-size: calc(var(--u) * 1.8); letter-spacing: .26em; color: var(--accent); }
+.p-claim {
+  margin: calc(var(--u) * 1.4) 0 0;
+  font-family: var(--f-display); font-weight: 760;
+  font-size: calc(var(--u) * 5.6); line-height: 1.03; letter-spacing: -.03em;
+  text-wrap: balance;
+}
+
+.p-foot {
+  display: grid; grid-template-columns: 1fr auto; align-items: end; gap: calc(var(--u) * 5);
+  padding: calc(var(--u) * 4) 0 calc(var(--u) * 6);
+  border-top: calc(var(--u) * .3) solid var(--ink);
+}
+.p-closing {
+  margin: 0;
+  font-family: var(--f-display); font-weight: 820;
+  font-size: calc(var(--u) * 6.4); line-height: .98; letter-spacing: -.035em;
+}
+.p-closing span { color: var(--accent); }
+.p-qr { display: grid; justify-items: center; gap: calc(var(--u) * 1.2); }
+.p-qr-code { width: calc(var(--u) * 17); height: auto; border-radius: calc(var(--u) * .6); }
+.p-qr .label { font-size: calc(var(--u) * 1.45); letter-spacing: .2em; color: var(--ink-2); }
+
+@media print {
+  html, body, .paper-view { background: var(--paper); }
+  .paper-tools { display: none; }
+  .stage { display: block; padding: 0; }
+  .sheet { box-shadow: none; break-inside: avoid; }
+}

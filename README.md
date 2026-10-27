@@ -7,7 +7,8 @@ own path.
 | URL | Content | Source |
 |---|---|---|
 | `/` | Landing page (generated) | `site/` + `projects.json` |
-| `/hotnets26-presentation/` | Interactive demo for the HotNets 2026 paper | `hotnets-artifact/web/` |
+| `/hotnets26-presentation/` | HotNets 2026 interactive poster, and the paper poster at `/poster/` | `hotnets-posters/` (built to `dist/`) |
+| `/hotnets26-demo/` | Interactive demo for the HotNets 2026 paper | `hotnets-artifact/web/` |
 | `/hotnets26-demo-video/` | Two-minute demo video | `hotnets26-demo-video/` |
 | `/datasets/` | Measurement data (coming soon) | — |
 
@@ -16,15 +17,17 @@ projects.json          ← registry: URL path → source folder (one entry per p
 site/build.py          ← assembles _site/ from projects.json; landing + 404 templates next to it
 .github/workflows/     ← tests, builds and deploys on every push to main
 hotnets-artifact/      ← interactive demo (see its README)
+hotnets-posters/       ← HotNets posters, React + Vite (see its README; build before site/build.py)
 hotnets26-demo-video/  ← the published video page, MP4 and poster
-qr/                    ← QR code to the interactive demo (SVG + PNG; not published as a page)
+qr/                    ← QR code to /hotnets26-presentation/, the interactive poster (SVG + PNG; not published as a page)
 ```
 
 ## Preview locally
 
 ```bash
+(cd hotnets-posters && deno install && deno task build)
 python3 site/build.py && python3 -m http.server -d _site 8000
-# http://localhost:8000/  ·  /hotnets26-presentation/  ·  /hotnets26-demo-video/
+# http://localhost:8000/  ·  /hotnets26-presentation/  ·  /hotnets26-demo/  ·  /hotnets26-demo-video/
 ```
 
 ## Deploy (once)

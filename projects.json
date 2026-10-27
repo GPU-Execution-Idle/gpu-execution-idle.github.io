@@ -7,7 +7,13 @@
     {
       "path": "hotnets26-presentation",
       "title": "The Network Should Wake the GPU",
-      "description": "Interactive demo for our HotNets 2026 paper.",
+      "description": "Interactive poster for our HotNets 2026 paper, plus the printable paper poster.",
+      "source": "hotnets-posters/dist"
+    },
+    {
+      "path": "hotnets26-demo",
+      "title": "Interactive demo",
+      "description": "Hands-on demo: explore GPU execution-idle and build your own power controller.",
       "source": "hotnets-artifact/web"
     },
     {
