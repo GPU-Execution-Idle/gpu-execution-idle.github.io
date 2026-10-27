@@ -16,7 +16,7 @@ const settingButtons = (current, onPick, tried, cls = 'three') => h('div', { cla
   }, h('span', { class: 'title' }, byKey[k].label, tried.includes(k) ? h('span', { class: 'explored' }, 'Explored') : null))));
 
 // Two buttons, one per downscaled setting (pressed once revealed). `labels` names each button.
-const raiseChoice = (revealed, onPick, labels = { sm: 'Raise from minimal SM freq.', smMem: 'Raise from minimal SM + memory freq.' }) =>
+const raiseChoice = (revealed, onPick, labels = { sm: 'Raise from minimal SM', smMem: 'Raise from minimal SM + memory' }) =>
   h('div', { class: 'seg', role: 'group', 'aria-label': 'Raise frequency' }, LOWERED.map((k) => h('button', {
     class: 'choice plain center', type: 'button', 'aria-pressed': String(revealed.includes(k)), onclick: () => onPick(k),
   }, h('span', { class: 'title' }, labels[k]))));
@@ -219,7 +219,7 @@ function leadSvg(raised, animKey, f) {
   const x = (t) => L + ((t - T0) / -T0) * (xWork - L); // to scale for t ≤ 0
   const ROW = 58, TOP = 16;
   const rows = [{ key: 'ready', title: 'Default (no scale)' },
-    { key: 'sm', title: 'Raise from minimal SM freq.' }, { key: 'smMem', title: 'Raise from minimal SM + memory freq.' }];
+    { key: 'sm', title: 'Raise from minimal SM' }, { key: 'smMem', title: 'Raise from minimal SM + memory' }];
   const o = [];
   rows.forEach((r, i) => {
     const y = TOP + i * ROW, by = y + 20, bh = 22;
