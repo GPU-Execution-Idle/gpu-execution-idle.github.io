@@ -28,7 +28,7 @@ python3 site/build.py && python3 -m http.server -d _site 8000
 
 ## Deploy (once)
 
-1. Create the GitHub organization **GPU-Execution-idle** (its sites live at `gpu-execution-idle.github.io`).
+1. Create the GitHub organization **GPU-Execution-Idle** (its sites live at `gpu-execution-idle.github.io`).
 2. Create the repository **`gpu-execution-idle.github.io`** in it (this exact name serves the site root)
    and push this folder to its `main` branch.
 3. **Settings → Pages → Source: GitHub Actions.** Every push to `main` then tests, builds and deploys.
