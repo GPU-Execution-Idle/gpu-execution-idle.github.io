@@ -1,7 +1,7 @@
 // Explore pages about lowering frequency: execution-idle power, measured savings and latency
 // cost in workloads, and how early to wake. Data: shared/activity1-data.js.
 // Pages get a context from explore.js: { st, persist, render, nav, animId, animateKey }.
-import { h, esc, questionCard } from '../ui/dom.js';
+import { h, esc, questionCard, answerStrip, hlSetting, hlWorkload, hlValue } from '../ui/dom.js';
 import { A1_DATA as D, MEASURED_IMPACT } from '../../shared/activity1-data.js';
 
 const SETTINGS = ['ready', 'sm', 'smMem'];
@@ -9,16 +9,23 @@ const LOWERED = ['sm', 'smMem'];
 const COLOR = { ready: 'var(--c-ready)', sm: 'var(--c-sm)', smMem: 'var(--c-smMem)' };
 const byKey = Object.fromEntries(D.settings.map((s) => [s.key, s]));
 const ms = (s) => `${Math.round(s * 1000)} ms`;
+// Answers name settings by their button labels, highlighted the same way on every page.
+const setting = (k) => hlSetting(k, byKey[k].label);
+// The setting an answer describes: the one last clicked, else the last one revealed.
+const answerKey = (current, revealed) => (LOWERED.includes(current) ? current : LOWERED.findLast((k) => revealed.includes(k)));
+// Lead-in placed under the answer, right above the setting buttons.
+const settingNote = () => h('p', { class: 'setting-note' }, 'Under the following setting');
 // Setting buttons; settings in `tried` get an "Explored" tag.
 const settingButtons = (current, onPick, tried, cls = 'three') => h('div', { class: cls, role: 'group', 'aria-label': 'Frequency setting' },
   SETTINGS.map((k) => h('button', {
-    class: 'choice plain center', type: 'button', 'aria-pressed': String(current === k), onclick: () => onPick(k),
+    class: 'choice plain center', type: 'button', 'data-setting': k, 'aria-pressed': String(current === k), onclick: () => onPick(k),
   }, h('span', { class: 'title' }, byKey[k].label, tried.includes(k) ? h('span', { class: 'explored' }, 'Explored') : null))));
 
-// Two buttons, one per downscaled setting (pressed once revealed). `labels` names each button.
-const raiseChoice = (revealed, onPick, labels = { sm: 'Raise from minimal SM', smMem: 'Raise from minimal SM + memory' }) =>
-  h('div', { class: 'seg', role: 'group', 'aria-label': 'Raise frequency' }, LOWERED.map((k) => h('button', {
-    class: 'choice plain center', type: 'button', 'aria-pressed': String(revealed.includes(k)), onclick: () => onPick(k),
+
+// Two buttons, one per downscaled setting; only `selected` (the one the answer describes) is pressed.
+const raiseChoice = (selected, onPick, labels = { sm: 'Wake from minimum SM', smMem: 'Wake from minimum SM + memory' }) =>
+  h('div', { class: 'seg', role: 'group', 'aria-label': 'Downscaled setting' }, LOWERED.map((k) => h('button', {
+    class: 'choice plain center', type: 'button', 'data-setting': k, 'aria-pressed': String(selected === k), onclick: () => onPick(k),
   }, h('span', { class: 'title' }, labels[k]))));
 
 export function frequencyPages(ctx) {
@@ -45,7 +52,7 @@ export function frequencyPages(ctx) {
     pw.ref.style.bottom = `${(100 * byKey.ready.powerW) / maxW}%`;
 
     const buttons = h('div');
-    const feedback = h('div', { 'aria-live': 'polite' });
+    const answer = h('div');
     const nav = h('div');
     const update = () => {
       // Before any choice the GPU sits at default frequencies and power is hidden.
@@ -65,26 +72,28 @@ export function frequencyPages(ctx) {
 
       buttons.replaceChildren(settingButtons(st.freqCurrent, (k) => {
         st.freqCurrent = k;
+        if (LOWERED.includes(k)) st.freqLowered = k;
         if (!st.freqTried.includes(k)) st.freqTried.push(k);
         ctx.persist();
         update();
       }, st.freqTried));
-      const below = byKey.ready.powerW - s.powerW;
       const unlocked = LOWERED.some((k) => st.freqTried.includes(k));
-      feedback.replaceChildren(
-        ...(st.freqCurrent ? [h('p', { class: 'feedback result-box' }, h('b', {}, `${s.label}: `), `${s.powerW} W`, below > 0 ? ` (${below} W below default)` : '')] : []));
+      // The answer appears once a lowered setting is picked and quotes that setting's saving.
+      const low = answerKey(st.freqLowered, st.freqTried);
+      answer.replaceChildren(...(low ? [answerStrip(setting(low), ' cuts idle power by ', hlValue(`${byKey.ready.powerW - byKey[low].powerW} W`, 'good'), ', with the model still loaded.')] : []));
       nav.replaceChildren(ctx.nav({ enabled: unlocked, hint: 'Try a lower-frequency setting to continue.' }));
     };
     update();
     return [
       questionCard(
         h('h1', {}, 'Can lower frequencies cut execution-idle power?'),
-        h('div', { class: 'tags' }, h('span', { class: 'tag' }, 'Model loaded'), h('span', { class: 'tag' }, '0% utilization'),
-          h('span', { class: 'tags-note' }, 'Check power under the following settings:')),
+        h('div', { class: 'tags' }, h('span', { class: 'tag' }, 'Model loaded'), h('span', { class: 'tag' }, '0% utilization')),
+        answer,
+        settingNote(),
         buttons),
       h('div', { class: 'gauges' }, sm.el, mem.el, pw.el),
       h('p', { class: 'gauge-key small muted' }, h('i', { class: 'key-default' }), 'default', h('i', { class: 'key-trueidle' }), 'true idle'),
-      feedback,
+      h('p', { class: 'sm-def small muted' }, h('b', {}, 'SM'), ' (streaming multiprocessor): the GPU’s compute cores.'),
       nav,
     ];
   }
@@ -92,7 +101,7 @@ export function frequencyPages(ctx) {
   // ---------------- Savings and latency cost: measured workload results ----------------
   // One measured metric per page. Revealed settings accumulate per page; clicking one again
   // only highlights it. The workload choice is shared by both pages.
-  function metricPage({ title, context = null, metric, pctKey, chartTitle, fmt, revealedKey, hint, raiseButtons = false }) {
+  function metricPage({ title, context = null, metric, pctKey, chartTitle, fmt, revealedKey, hint, answer, raiseButtons = false }) {
     const w = MEASURED_IMPACT[st.workload];
     const revealed = st[revealedKey];
     const highlightKey = `${revealedKey}Highlight`;
@@ -116,7 +125,9 @@ export function frequencyPages(ctx) {
       questionCard(
         h('h1', {}, title),
         context ? h('p', {}, context) : null,
-        raiseButtons ? raiseChoice(revealed, pick, raiseButtons === true ? undefined : raiseButtons) : settingButtons(st[highlightKey], pick, revealed.filter((k) => k !== 'ready'), 'three compact')),
+        unlocked ? answerStrip(...answer(w, answerKey(st[highlightKey], revealed), pctKey)) : null,
+        settingNote(),
+        raiseButtons ? raiseChoice(answerKey(st[highlightKey], revealed), pick, raiseButtons === true ? undefined : raiseButtons) : settingButtons(st[highlightKey], pick, revealed.filter((k) => k !== 'ready'), 'three compact')),
       h('div', { class: 'bar-chart', html: chart }),
       h('div', { class: 'picker' }, h('span', {}, 'Workload:'),
         h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Workload' }, Object.entries(MEASURED_IMPACT).map(([k, x]) => h('button', {
@@ -128,7 +139,8 @@ export function frequencyPages(ctx) {
   }
 
   const savings = () => metricPage({
-    title: 'How much does that save in real workloads?',
+    title: 'How much does lowering frequencies during execution-idle reduce average GPU power across full workload runs?',
+    answer: (w, k, pctKey) => [setting(k), ' cuts average power by ', hlValue(`${Math.abs(w.results[k][pctKey])}%`, 'good'), ' on ', hlWorkload(w.traceName), '.'],
     metric: 'powerW', pctKey: 'powerPct', fmt: (v) => `${v} W`,
     chartTitle: () => 'Average GPU power (W)',
     raiseButtons: { sm: 'SM at minimum', smMem: 'SM + memory at minimum' },
@@ -137,7 +149,8 @@ export function frequencyPages(ctx) {
   });
 
   const cost = () => metricPage({
-    title: 'What latency overhead does raising frequency add?',
+    title: 'What latency overhead comes from raising frequencies after work resumes?',
+    answer: (w, k, pctKey) => ['Waking from ', setting(k), ' adds ', hlValue(`${w.results[k][pctKey]}%`, 'bad'), ` median ${w.latency.label.replace(/^p50 /, '')} on `, hlWorkload(w.traceName), '.'],
     metric: (w) => [w.latency.key, w.latency.pctKey], fmt: (v) => `${v.toFixed(2)} s`,
     chartTitle: (w) => `${w.latency.label} (s)`,
     revealedKey: 'revealedLatency',
@@ -152,10 +165,12 @@ export function frequencyPages(ctx) {
     const chart = h('div');
     const raise = (k) => {
       if (!st.raised.includes(k)) { st.raised.push(k); ctx.animateKey = k; }
+      st.raisedCurrent = k;
       ctx.persist();
       ctx.render();
     };
-    const buttons = raiseChoice(st.raised, raise);
+    const wakeKey = answerKey(st.raisedCurrent, st.raised);
+    const buttons = raiseChoice(wakeKey, raise);
     const animating = ctx.animateKey;
     ctx.animateKey = null;
     if (animating) {
@@ -171,11 +186,12 @@ export function frequencyPages(ctx) {
     }
     return [
       questionCard(
-        h('h1', {}, 'Can raising frequency early hide this overhead?'),
-        h('p', {}, 'Check how early wake-up needs to be.'),
+        h('h1', {}, 'Can raising frequency early avoid putting transition overhead to workload?'),
+        wakeKey ? answerStrip('Waking from ', setting(wakeKey), ' ', hlValue(ms(D.wakeLeadS[wakeKey])), ' early matches ', setting('ready'), ' performance.') : null,
+        settingNote(),
         buttons),
       h('div', { class: 'bar-chart' }, chart),
-      ctx.nav({ enabled: st.raised.length > 0, hint: 'Raise a frequency early to continue.' }),
+      ctx.nav({ enabled: st.raised.length > 0, hint: 'Try a wake-up option to continue.' }),
     ];
   }
 
@@ -218,8 +234,8 @@ function leadSvg(raised, animKey, f) {
   const xWork = 196, xEnd = W - 8;                  // inference spans [xWork, xEnd] (schematic)
   const x = (t) => L + ((t - T0) / -T0) * (xWork - L); // to scale for t ≤ 0
   const ROW = 58, TOP = 16;
-  const rows = [{ key: 'ready', title: 'Default (no scale)' },
-    { key: 'sm', title: 'Raise from minimal SM' }, { key: 'smMem', title: 'Raise from minimal SM + memory' }];
+  const rows = [{ key: 'ready', title: 'Default' },
+    { key: 'sm', title: 'SM at minimum' }, { key: 'smMem', title: 'SM + memory at minimum' }];
   const o = [];
   rows.forEach((r, i) => {
     const y = TOP + i * ROW, by = y + 20, bh = 22;
@@ -240,7 +256,7 @@ function leadSvg(raised, animKey, f) {
         `<path d="M${xWork - 8},${ay - 6} L${xWork},${ay} L${xWork - 8},${ay + 6} Z" style="fill:${COLOR[r.key]}"/>`,
         `<circle cx="${x(at)}" cy="${ay}" r="5" style="fill:${COLOR[r.key]}"/>`);
       if (r.key !== animKey || f > 0.99) {
-        o.push(`<text class="lab" x="${(x(-lead) + xWork) / 2}" y="${ay - 7}" text-anchor="middle" style="font-weight:700;fill:${COLOR[r.key]}">raise ${ms(lead)} earlier</text>`);
+        o.push(`<text class="lab" x="${(x(-lead) + xWork) / 2}" y="${ay - 7}" text-anchor="middle" style="font-weight:700;fill:${COLOR[r.key]}">wake ${ms(lead)} earlier</text>`);
       }
     }
     const done = r.key === 'ready' || r.key !== animKey || f > 0.99;
@@ -255,7 +271,7 @@ function leadSvg(raised, animKey, f) {
     `<text x="${xWork}" y="${base + 24}" text-anchor="middle" style="font-weight:800">work starts on an L40S GPU</text>`);
   for (const t of [-0.3, -0.2, -0.1]) o.push(`<text class="lab" x="${x(t)}" y="${base + 4}" text-anchor="middle">−${Math.round(-t * 1000)}${t === -0.1 ? ' ms' : ''}</text>`);
   const label = ['Default: inference starts when work starts.',
-    ...LOWERED.filter((k) => raised.includes(k)).map((k) => `${byKey[k].label}: raise frequency ${ms(D.wakeLeadS[k])} before work starts; inference matches the default.`)].join(' ');
+    ...LOWERED.filter((k) => raised.includes(k)).map((k) => `${byKey[k].label}: wake ${ms(D.wakeLeadS[k])} before work starts; inference matches the default.`)].join(' ');
   return `<svg class="tl lead-chart" viewBox="0 0 ${W} ${base + 30}" role="img" aria-label="${esc(label)}">${o.join('')}</svg>`;
 }
 

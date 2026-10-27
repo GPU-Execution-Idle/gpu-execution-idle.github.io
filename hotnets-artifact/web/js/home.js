@@ -9,7 +9,7 @@ const SUMMARIES = [
 export function mount(root) {
   document.body.classList.add('welcome');
   root.replaceChildren(h('section', { class: 'welcome-page' },
-    h('p', { class: 'welcome-label' }, 'HotNets 2026 · Interactive demo'),
+    h('p', { class: 'welcome-label' }, 'HotNets 2026 · Interactive poster'),
     h('h1', { class: 'welcome-title' }, h('span', { class: 'lead' }, 'The network should'), h('span', { class: 'big' }, 'wake the GPU.')),
     h('ol', { class: 'welcome-list', 'aria-label': 'Activities' }, SUMMARIES.map(([n, title]) => h('li', {},
       h('span', { class: 'n', 'aria-hidden': 'true' }, n),

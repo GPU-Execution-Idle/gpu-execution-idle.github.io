@@ -39,3 +39,13 @@ export function scrollTop() { window.scrollTo({ top: 0, behavior: 'instant' in w
 
 // A question with its answer buttons, shown as one card (same look on every question page).
 export const questionCard = (...children) => h('section', { class: 'q-card' }, ...children);
+
+// The answer to a page's question, shown under the question's description once the visitor has interacted.
+// Parts can mix text with the highlights below.
+export const answerStrip = (...parts) => h('div', { class: 'answer-strip', role: 'status' },
+  h('span', { class: 'answer-label' }, 'Answer'), h('b', {}, ...parts));
+// Answer highlights: a setting (outlined in its color, like its chart bar), a workload (like the
+// selected workload button) and a measured value (colored when it is a saving or a cost).
+export const hlSetting = (key, label) => h('span', { class: `hl-set ${key}` }, label);
+export const hlWorkload = (name) => h('span', { class: 'hl-work' }, name);
+export const hlValue = (text, tone = '') => h('span', { class: `hl-val ${tone}` }, text);

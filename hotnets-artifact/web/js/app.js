@@ -11,11 +11,11 @@ let cleanup = null;
 let current = '';
 
 const ACTS = { explore, build };
-const ACT_NAMES = { explore: 'Explore', build: 'Build a controller' };
+const ACT_NAMES = { explore: 'Explore', build: 'Build your controller' };
 // Old activity links now open the merged Explore session.
 const REDIRECTS = { a0: '#/explore', a1: '#/explore', a2: '#/build' };
 
-// Restart: resets only the current activity. First tap arms it, a second tap within 3 s confirms.
+// Restart: resets every page and returns to step 0. First tap arms it, a second tap within 3 s confirms.
 let restartTimer = 0;
 function setupRestart() {
   const btn = document.getElementById('actrestart');
@@ -28,37 +28,44 @@ function setupRestart() {
       return;
     }
     disarm();
-    ACTS[current]?.reset();
-    route();
+    for (const act of Object.values(ACTS)) act.reset();
+    if (location.hash === '#/explore') route();
+    else location.hash = '#/explore';
   });
   window.addEventListener('hashchange', disarm);
 }
 
-// Step bar for the current section.
+// Step bar shared by Explore and Build: the Explore steps, then Build your controller as the last
+// step. One button per step, so visitors can jump to any step.
 function refreshNav() {
   const box = document.getElementById('actprogress');
   box.hidden = !ACTS[current];
   if (box.hidden) return;
-  const p = ACTS[current].progress();
-  document.getElementById('actprogress-label').textContent = p.steps && !p.compact ? '' : p.label;
-  // Activities with named steps get a segmented bar (e.g. Waiting power → Returning work → Takeaways).
+  const e = explore.progress();
+  const BUILD = e.steps.length;
+  const names = [...e.steps, 'Build your controller'];
+  const completed = [...e.completed, build.progress().completed[2]];
+  const at = current === 'build' ? BUILD : e.current;
+  const go = (i) => {
+    if (i === BUILD) { location.hash = '#/build'; return; }
+    if (current === 'explore') { explore.goToStep(i); return; }
+    explore.setStep(i);
+    location.hash = '#/explore';
+  };
   const steps = document.getElementById('actprogress-steps');
-  const bar = document.getElementById('actprogress-bar');
-  bar.hidden = !!p.steps;
-  steps.hidden = !p.steps;
-  if (p.steps) {
-    // Shared step component: current (accent), completed (✓), upcoming (muted). Compact mode
-    // (many steps) shows unlabeled segments and puts "Step n of N · name" in the label.
-    steps.classList.toggle('compact', !!p.compact);
-    steps.replaceChildren(...p.steps.map((name, i) => h('li', {
-      class: i === p.current ? 'current' : p.completed?.[i] ? 'done' : 'upcoming', 'aria-current': i === p.current ? 'step' : null,
-      'aria-label': `${name}${i === p.current ? ' (current step)' : p.completed?.[i] ? ' (completed)' : ''}`,
-    }, name)));
-    return;
-  }
-  bar.setAttribute('aria-valuemax', p.total);
-  bar.setAttribute('aria-valuenow', p.done);
-  bar.firstElementChild.style.width = `${(100 * p.done) / p.total}%`;
+  // Current step: accent; completed: check mark; upcoming: muted.
+  steps.replaceChildren(...names.map((name, i) => {
+    const label = `${i} · ${name}`;
+    const state = i === at ? 'current' : completed[i] ? 'done' : 'upcoming';
+    return h('li', {}, h('button', {
+      type: 'button', class: `step ${state}`, 'aria-current': i === at ? 'step' : null,
+      'aria-label': `${label}${state === 'current' ? ' (current step)' : state === 'done' ? ' (completed)' : ''}`,
+      onclick: () => go(i),
+    }, label));
+  }));
+  // Keep the current step visible in the strip (it scrolls sideways on narrow phones).
+  const cur = steps.querySelector('.step.current');
+  if (cur) steps.scrollLeft = Math.max(0, cur.offsetLeft - (steps.clientWidth - cur.offsetWidth) / 2);
 }
 
 const routes = {

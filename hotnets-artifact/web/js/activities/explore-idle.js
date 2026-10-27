@@ -1,7 +1,7 @@
 // Explore pages about idle power and the missing information: "Does 0% utilization mean low
 // power?" and "When will work return?" (real L40S traces). Data: shared/activity0-data.js.
 // Pages get a context from explore.js: { st, persist, render, nav, justRevealed, animId }.
-import { h, esc, questionCard } from '../ui/dom.js';
+import { h, esc, questionCard, answerStrip, hlSetting, hlValue } from '../ui/dom.js';
 import { A0_DATA as D } from '../../shared/activity0-data.js';
 import { IDLE_POWER } from '../../shared/params.js';
 
@@ -21,30 +21,31 @@ export function idlePages(ctx) {
       h('div', { class: 'gpu-card' },
         h('div', { class: 'gpu-head' }, h('span', { class: 'gpu-letter' }, letter),
           revealed ? h('span', { class: 'gpu-state' }, name) : h('span', { class: 'gpu-name' }, P.gpu)),
-        h('div', { class: 'gpu-desc muted' }, desc),
+        h('div', { class: 'gpu-desc' }, desc),
         h('div', { class: 'gpu-util' }, h('span', { class: 'small muted' }, 'Utilization'), h('b', {}, '0%')),
         revealed ? null : h('div', { class: 'gpu-util' }, h('span', { class: 'small muted' }, 'Power'), h('b', {}, '? W'))),
       revealed ? h('div', { class: 'vbar-wrap' },
         h('div', { class: 'vbar', style: `--h:${(100 * watts) / max}%` },
           h('span', { class: 'vbar-val' }, `${watts} W`),
           h('span', { class: 'vbar-name' }, name))) : null);
+    // A and B take their card's color when picked, like the answer's highlights.
     const choice = (key, label) => h('button', {
-      class: 'choice plain center', type: 'button', 'aria-pressed': String(st.idleChoice === key), disabled: revealed,
+      class: 'choice plain center', type: 'button', 'data-setting': { A: 'trueidle', B: 'ready' }[key], 'aria-pressed': String(st.idleChoice === key), disabled: revealed,
       onclick: () => { st.idleChoice = key; ctx.justRevealed = true; ctx.persist(); ctx.render(); },
     }, h('span', { class: 'title' }, label));
 
     const out = [
       questionCard(
         h('h1', {}, 'Does 0% utilization mean low power?'),
-        h('p', {}, `Two identical ${P.gpu} GPUs, neither running any work. Which uses more power?`),
+        h('p', {}, `Two identical ${P.gpu} GPUs, neither running any work. A has no program loaded; B has an inference engine loaded. Which uses more power?`),
+        revealed ? answerStrip('At 0% utilization, ', hlSetting('ready', 'Inference engine loaded'), ' draws ', hlValue(`${P.execIdleW} W`),
+          ', vs. ', hlValue(`${P.trueIdleW} W`), ' for ', hlSetting('trueidle', 'No program loaded'), '.') : null,
         h('div', { class: 'three' }, choice('A', 'A'), choice('same', 'About the same'), choice('B', 'B'))),
       h('div', { class: 'gpu-pair' },
         column('is-true', 'A', 'No program loaded', 'True idle', P.trueIdleW),
         column('is-exec', 'B', 'Inference engine loaded', 'Execution-idle', P.execIdleW)),
     ];
     if (revealed) {
-      const gap = P.execIdleW - P.trueIdleW;
-      const verdict = st.idleChoice === 'B' ? 'Right: ' : 'Not quite: ';
       const others = h('div', { class: 'bars', hidden: true }, IDLE_POWER.map((g) => h('div', { class: 'bar-row' },
         h('div', { class: 'name' }, h('span', {}, g.gpu),
           h('span', {}, `${g.trueIdle} → ${g.execIdle} W `, h('b', { class: 'diff' }, `+${g.execIdle - g.trueIdle} W`))),
@@ -55,10 +56,7 @@ export function idlePages(ctx) {
         othersBtn.setAttribute('aria-expanded', String(!others.hidden));
         othersBtn.textContent = others.hidden ? 'Other GPUs' : 'Hide other GPUs';
       } }, 'Other GPUs');
-      out.push(
-        h('p', { class: 'feedback result-box', 'aria-live': 'polite' }, h('b', {}, verdict), 'B draws ', h('b', { class: 'diff' }, `+${gap} W`),
-          ` (${(P.execIdleW / P.trueIdleW).toFixed(1)}×) more at 0% utilization.`),
-        othersBtn, others);
+      out.push(othersBtn, others);
     }
     out.push(ctx.nav({ enabled: revealed, hint: 'Choose an answer to continue.' }));
     return out;
@@ -76,9 +74,13 @@ export function idlePages(ctx) {
 
     const card = questionCard(
       h('h1', {}, 'How can a GPU know when work returns, so it can wake early?'),
-      h('p', { class: 'prompt' }, `Imagine you’re the GPU: your agent is making a tool call, and you’ve had no work for ${D.zeroUtilForS} seconds. From utilization alone, can you tell how much longer you’ll wait?`));
+      h('p', { class: 'prompt' }, `Imagine you’re the GPU: your agent is making a tool call, and you’ve had no work for ${D.zeroUtilForS} seconds. From utilization alone, can you tell how much longer you’ll wait?`),
+      st.cantTell ? answerStrip('Utilization alone can’t tell. External context can help predict when work returns.')
+        : guess ? answerStrip('Counterexample: after the same ', hlValue(`${D.zeroUtilForS} s`), ' idle, this GPU waited ',
+          hlValue(`${D.executions[guess.execution].nextWorkInS.toFixed(1)} s`), ' more.', left ? ' Try another answer.' : '')
+        : null);
     const out = [card];
-    const cant = h('button', { class: 'choice plain cant', type: 'button', 'aria-pressed': String(st.cantTell), disabled: st.cantTell,
+    const cant = h('button', { class: 'choice plain cant', type: 'button',
       onclick: () => { st.cantTell = true; ctx.persist(); ctx.render(); } },
     h('span', { class: 'title' }, 'I can’t tell from GPU utilization alone.'));
     if (!st.cantTell) {
@@ -87,18 +89,9 @@ export function idlePages(ctx) {
         onclick: () => { st.guessCurrent = k; if (!st.guessTried.includes(k)) st.guessTried.push(k); ctx.persist(); ctx.render(); },
       }, h('span', { class: 'title' }, D.guesses[k].label, st.guessTried.includes(k) ? h('span', { class: 'explored' }, 'Explored') : null)))));
       if (!left) card.append(cant);
-    } else {
-      card.append(cant);
     }
-    // Once the visitor concludes they can't tell, the page is done: no more figure.
-    if (!st.cantTell) out.push(chart);
-    if (guess) {
-      const e = D.executions[guess.execution];
-      out.push(legend(shown, (x) => `SWE-bench · ${x.task} · step ${x.step}`),
-        h('p', { class: 'feedback result-box', 'aria-live': 'polite' }, h('b', {}, 'Here’s a counterexample: '),
-          `after the same ${D.zeroUtilForS} seconds without GPU work, this GPU waited another ${e.nextWorkInS.toFixed(1)} seconds.`,
-          left ? ' Try another answer.' : ''));
-    }
+    out.push(chart); // after "I can't tell", it shows all three possible continuations
+    if (guess) out.push(legend(shown, (x) => `SWE-bench · ${x.task} · step ${x.step}`));
     out.push(ctx.nav({
       enabled: st.cantTell,
       hint: left ? `Explore all three answers to continue (${left} left).` : 'Choose “I can’t tell from GPU utilization alone.” to continue.',

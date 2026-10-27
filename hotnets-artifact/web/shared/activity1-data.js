@@ -24,6 +24,7 @@ export const MEASURED_IMPACT = {
   llm: {
     tab: 'LLM serving',
     trace: 'Azure Code trace',
+    traceName: 'Azure Code',
     // Latency shown on the cost page for this workload (key into results).
     latency: { label: 'p50 response latency', key: 'p50S', pctKey: 'p50Pct' },
     results: {
@@ -35,6 +36,7 @@ export const MEASURED_IMPACT = {
   agent: {
     tab: 'Web agent',
     trace: 'WebArena',
+    traceName: 'WebArena',
     latency: { label: 'p50 task-completion latency', key: 'p50S', pctKey: 'p50Pct' },
     results: {
       ready: { powerW: 151.6, p95S: 124.89, p50S: 14.92 },

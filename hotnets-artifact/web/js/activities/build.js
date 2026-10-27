@@ -1,4 +1,4 @@
-// Build a controller: pick a job, a power setting and an idle-period predictor, then see the
+// Build your controller: pick a job, a power setting and an idle-period predictor, then see the
 // energy saved and latency added on a real coding-agent trace. Simulation: shared/controller-sim.js.
 import { h, esc } from '../ui/dom.js';
 import { load, save, remove } from '../store.js';
@@ -36,8 +36,9 @@ export function mount(root) {
   function page() {
     const needsPolicy = st.setting && st.setting !== 'none';
     const ready = st.setting === 'none' || (needsPolicy && st.policy);
-    const options = (entries, current, onPick, disabled = false) => h('div', { class: 'choices' }, entries.map(([k, o]) => h('button', {
-      class: 'choice plain', type: 'button', 'aria-pressed': String(current === k), disabled, onclick: () => onPick(k),
+    // `colorOf` gives a power setting's color key, so a picked setting looks like it does in Explore.
+    const options = (entries, current, onPick, disabled = false, colorOf = null) => h('div', { class: 'choices' }, entries.map(([k, o]) => h('button', {
+      class: 'choice plain', type: 'button', 'data-setting': colorOf?.(k), 'aria-pressed': String(current === k), disabled, onclick: () => onPick(k),
     }, h('span', { class: 'title' }, o.label), o.note ? h('span', { class: 'sub' }, o.note) : null)));
     const out = [
       h('p', { class: 'intro' }, 'You are the GPU power controller. Try the strategies below to see the energy–latency tradeoff.'),
@@ -45,11 +46,11 @@ export function mount(root) {
       h('h2', {}, '1 · While execution-idle, the GPU should…'),
       options(Object.entries(SETTINGS).map(([k, s]) => [k, { label: s.label,
         note: s.powerW ? `${s.powerW} W while idle · ${Math.round(s.leadS * 1000)} ms to wake` : s.note }]),
-      st.setting, (k) => choose({ setting: k })),
+      st.setting, (k) => choose({ setting: k }), false, (k) => (k === 'none' ? 'ready' : k)),
       h('h2', {}, '2 · Predict each idle period with…'),
-      h('p', { class: 'small muted' }, 'The controller starts waking at the predicted end minus the wake-up time.'),
+      h('p', { class: 'small muted' }, 'The controller starts waking at the predicted end minus the required wake-up time.'),
       options(Object.entries(POLICIES), st.policy, (k) => choose({ policy: k }), !needsPolicy),
-      h('button', { class: 'btn primary', type: 'button', disabled: !ready, onclick: run }, 'Continue'),
+      h('button', { class: 'btn primary', type: 'button', disabled: !ready, onclick: run }, 'Run controller'),
       ready ? null : h('p', { class: 'nav-hint' }, st.setting ? 'Choose a prediction to continue.' : 'Choose a power setting to continue.'),
     ];
     if (st.ran) out.push(results());
@@ -75,7 +76,8 @@ export function mount(root) {
     const T = trace();
     const r = simulateController(T, st.setting, policyOf());
     return h('section', { class: 'results-card', 'aria-live': 'polite' },
-      h('h2', {}, 'Result vs. default'),
+      h('h2', {}, 'Simulated results'),
+      h('p', { class: 'small muted' }, 'Compared with Default.'),
       h('div', { class: 'stats' },
         h('div', { class: 'stat' }, h('div', { class: 'v good' }, pct('−', r.energySavedPct)), h('div', { class: 'l' }, 'GPU energy')),
         h('div', { class: 'stat' }, h('div', { class: `v ${r.addedLatencyS > 0 ? 'bad' : 'good'}` }, pct('+', r.addedLatencyPct)),
@@ -118,4 +120,5 @@ export function mount(root) {
   }
 
   render();
+  return null;
 }

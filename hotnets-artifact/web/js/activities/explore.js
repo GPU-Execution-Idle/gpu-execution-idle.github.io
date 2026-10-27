@@ -1,5 +1,6 @@
 // Explore: one session that builds the argument page by page, then hands off to Activity 2.
-//   Idle power → Lower frequency → Savings → Latency cost → Early wake-up → When work returns → Proposal
+//   0 Idle power → 1 Lower frequency → 2 Power savings → 3 Latency cost → 4 Early wake-up →
+//   5 Work returns → 6 Proposal; the step bar adds 7 Build your controller (numbered from 0)
 // Pages live in explore-idle.js and explore-frequency.js; this module owns their order, the
 // saved state, navigation and the closing proposal page.
 import { h, scrollTop } from '../ui/dom.js';
@@ -17,19 +18,19 @@ const lowered = (list) => LOWERED.some((k) => list.includes(k));
 const PAGES = [
   { step: 'Idle power', page: 'idlePower', done: (s) => !!s.idleChoice },
   { step: 'Lower frequency', page: 'lowerFrequency', done: (s) => lowered(s.freqTried) },
-  { step: 'Savings', page: 'savings', done: (s) => lowered(s.revealedPower) },
+  { step: 'Power savings', page: 'savings', done: (s) => lowered(s.revealedPower) },
   { step: 'Latency cost', page: 'cost', done: (s) => lowered(s.revealedLatency) },
   { step: 'Early wake-up', page: 'earlyWake', done: (s) => s.raised.length > 0 },
-  { step: 'When work returns', page: 'whenReturn', done: (s) => s.cantTell },
+  { step: 'Work returns', page: 'whenReturn', done: (s) => s.cantTell },
   { step: 'Proposal', page: 'proposal', done: (s) => s.sawProposal },
 ];
 
 const fresh = () => ({
   page: 0,
   idleChoice: null, guessTried: [], guessCurrent: null, cantTell: false,
-  freqTried: [], freqCurrent: null, workload: 'llm',
+  freqTried: [], freqCurrent: null, freqLowered: null, workload: 'llm',
   revealedPower: ['ready'], revealedPowerHighlight: 'ready', revealedLatency: ['ready'], revealedLatencyHighlight: 'ready',
-  raised: [], sawProposal: false,
+  raised: [], raisedCurrent: null, sawProposal: false,
 });
 const readState = () => ({ ...fresh(), ...load(KEY, {}) });
 
@@ -41,9 +42,20 @@ export function progress() {
   const completed = PAGES.map((p) => p.done(s));
   return {
     done: completed.filter(Boolean).length, total: PAGES.length, steps: PAGES.map((p) => p.step), completed,
-    current: s.page, compact: true, label: `Step ${s.page + 1} of ${PAGES.length} · ${PAGES[s.page].step}`,
+    current: s.page,
   };
 }
+
+// Jump to any step from the step bar (no need to finish earlier steps; state is kept).
+let jump = null;
+export const goToStep = (i) => jump?.(i);
+// Open a step on the next mount (the step bar on the Build page links back here).
+export const setStep = (i) => {
+  const s = readState();
+  s.page = i;
+  if (PAGES[i].page === 'proposal') s.sawProposal = true;
+  save(KEY, s);
+};
 
 export function mount(root) {
   const st = readState();
@@ -73,6 +85,7 @@ export function mount(root) {
     }),
   };
   const pages = { ...idlePages(ctx), ...frequencyPages(ctx), proposal };
+  jump = (i) => { if (PAGES[i] && i !== st.page) go(i); };
 
   // ---------------- Proposal ----------------
   // The control-loop comparison from the talk (pitch video scene 5), drawn as SVG.
@@ -82,13 +95,13 @@ export function mount(root) {
       h('div', { class: 'loops' },
         h('figure', { class: 'loop-panel', html: LOCAL_LOOP_SVG }),
         h('figure', { class: 'loop-panel', html: SYSTEM_LOOP_SVG })),
-      pageNav({ back: () => go(st.page - 1), next: { label: 'Build a controller →', href: '#/build' } }),
+      pageNav({ back: () => go(st.page - 1), next: { label: 'Build your controller →', href: '#/build' } }),
     ];
   }
 
   if (!PAGES[st.page]) st.page = 0;
   ctx.render();
-  return () => { cancelAnimationFrame(ctx.animId); document.body.classList.remove('recap'); };
+  return () => { jump = null; cancelAnimationFrame(ctx.animId); document.body.classList.remove('recap'); };
 }
 
 // ---------------- Control-loop comparison ----------------
@@ -134,5 +147,5 @@ const SYSTEM_LOOP_SVG = `<svg viewBox="0 0 340 250" role="img" aria-label="Syste
   <text class="wake-text" x="224" y="47" text-anchor="middle">wake up now!</text>
   <text class="ready-text" x="232" y="168" text-anchor="middle">ready before</text>
   <text class="ready-text" x="232" y="183" text-anchor="middle">work arrives</text>
-  <text class="loop-caption cyan" x="330" y="244" text-anchor="end">System-wide control</text>
+  <text class="loop-caption cyan" x="196" y="236" text-anchor="middle">Our proposal: system-wide control</text>
 </svg>`;

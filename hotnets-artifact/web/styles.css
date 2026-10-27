@@ -46,8 +46,6 @@ a { color: var(--accent); }
   padding: 6px 16px 8px; }
 .actnav-inner { max-width: 640px; margin: 0 auto; }
 .actprogress { margin-top: 8px; }
-.actprogress .track { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
-.actprogress .fill { height: 100%; width: 0; background: var(--accent); transition: width .4s; }
 .foot { max-width: 640px; margin: 0 auto; padding: 0 16px 32px; font-size: .82rem; color: var(--muted); }
 
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin: 12px 0; }
@@ -210,8 +208,6 @@ body.recap .actnav { background: transparent; }
 .choice .explored { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; font-size: .75rem;
   font-weight: 600; color: var(--muted); border: 1px solid var(--line); vertical-align: 2px; }
 
-/* Step progress (named steps) */
-.steps { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; list-style: none; margin: 0; padding: 0; }
 
 /* Activity 1 */
 .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
@@ -266,15 +262,7 @@ body.welcome main { min-height: 100vh; min-height: 100dvh; display: flex; align-
 .vg-ref span { position: absolute; right: 100%; top: -9px; margin-right: 3px; font-size: .68rem; color: var(--c-trueidle); white-space: nowrap; }
 
 .progress-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-.progress-row .track, .progress-row .steps { flex: 1; min-width: 0; }
-.progress-row .track[hidden], .progress-row .steps[hidden] { display: none; }
-.plabel { font-size: .8rem; color: var(--muted); white-space: nowrap; }
-.plabel:empty { display: none; }
-.steps li { font-size: .74rem; line-height: 1.15; padding-top: 6px; border-top: 4px solid var(--line); text-align: center; color: var(--muted); }
-.steps li.done { border-top-color: color-mix(in srgb, var(--accent) 55%, var(--line)); color: var(--text); }
-.steps li.done::before { content: "✓ "; color: var(--good); font-weight: 700; }
-.steps li.current { border-top-color: var(--accent); color: var(--accent); font-weight: 800; }
-.restart { flex: none; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line);
+.progress-row .restart { flex: none; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line);
   background: var(--surface); color: var(--text); font: inherit; font-size: .8rem; font-weight: 600; cursor: pointer; }
 .restart.armed { background: var(--bad); border-color: var(--bad); color: #fff; }
 
@@ -329,13 +317,7 @@ svg.tl .placeholder { fill: none; stroke: var(--line); stroke-width: 1.5; stroke
 .bar-chart { max-width: 380px; margin: 8px auto; }
 .tags-note { align-self: center; font-size: .88rem; color: var(--muted); }
 
-/* Compact step bar for long sessions: unlabeled segments; the label says "Step n of N · name". */
-.steps.compact { gap: 3px; }
-.steps.compact li { font-size: 0; padding-top: 0; border-top-width: 6px; border-radius: 3px; }
-.steps.compact li.done::before { content: none; }
-.steps.compact li.done { border-top-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
-.progress-row .plabel { flex: none; max-width: 64%; overflow: hidden; text-overflow: ellipsis; font-weight: 600; color: var(--text); }
-h1.proposal { font-size: 1.7rem; text-align: center; margin: 18px 0 12px; }
+.progress-row h1.proposal { font-size: 1.7rem; text-align: center; margin: 18px 0 12px; }
 
 /* Proposal page: control-loop comparison (white and cyan on the purple background) */
 .loops { display: grid; gap: 4px; margin: 4px 0 8px; }
@@ -405,5 +387,45 @@ svg.tl .strip-idle { fill: var(--c-tool); }
 
 /* Step 1 cards: keep "No program loaded" / "Inference engine loaded" on one line on phones.
    The label shrinks with the screen, up to the normal size, so the longer one always fits. */
-.gpu-pair .gpu-card { padding-left: 10px; padding-right: 10px; }
-.gpu-desc { white-space: nowrap; font-size: min(.88rem, calc((50vw - 48px) / 11.8)); }
+.gpu-pair .gpu-card { padding-left: 8px; padding-right: 8px; }
+.gpu-desc { display: inline-block; white-space: nowrap; font-size: min(.88rem, calc((50vw - 56px) / 11.8));
+  padding: 1px 6px; margin-top: 2px; border: 1px solid var(--c); border-radius: 999px; color: var(--c); font-weight: 600; }
+
+/* Step bar: clickable steps in a strip that scrolls sideways on narrow phones (the page never does). */
+.progress-row .steps { flex: 1; min-width: 0; display: flex; gap: 6px; list-style: none; margin: 0; padding: 2px 0;
+  overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
+.progress-row .steps::-webkit-scrollbar { display: none; }
+.steps li { flex: none; }
+.step { min-height: 32px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface);
+  color: var(--muted); font: inherit; font-size: .78rem; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.step.done { color: var(--text); }
+.step.done::before { content: "✓ "; color: var(--good); }
+.step.current { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 800; }
+.step:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Answer strip: under the question's description once answered. */
+.answer-strip { display: grid; gap: 2px; margin: 10px 0 4px; padding: 10px 12px; border-radius: 10px;
+  border-left: 4px solid var(--purple-1); background: color-mix(in srgb, var(--purple-1) 12%, var(--surface)); }
+.answer-label { font-size: .68rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--purple-1); }
+.answer-strip b { font-size: .98rem; line-height: 1.35; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .answer-strip { border-left-color: var(--lavender); background: color-mix(in srgb, var(--purple-1) 30%, var(--surface)); }
+  :root:not([data-theme="light"]) .answer-label { color: var(--lavender); }
+}
+/* Very narrow phones: keep "minimum" from clipping in three-button rows. */
+@media (max-width: 359px) { .three .choice { font-size: .84rem; padding-left: 4px; padding-right: 4px; } }
+.setting-note { margin: 10px 0 0; font-size: .88rem; color: var(--muted); }
+.sm-def { text-align: center; margin: 4px 0 0; }
+/* Answer highlights: setting (outlined in its color), workload (like a selected workload button), value. */
+.hl-set, .hl-work { display: inline-block; padding: 0 6px; border-radius: 6px; line-height: 1.3; white-space: nowrap; }
+/* A setting looks the same in an answer and on its selected button: its color, outline and tint. */
+.hl-set { --c: var(--c-ready); border: 1.5px solid var(--c); }
+.hl-set.sm, [data-setting="sm"] { --c: var(--c-sm); }
+.hl-set.smMem, [data-setting="smMem"] { --c: var(--c-smMem); }
+.hl-set.trueidle, [data-setting="trueidle"] { --c: var(--c-trueidle); }
+[data-setting="ready"] { --c: var(--c-ready); }
+.hl-set, .choice[data-setting][aria-pressed="true"] { color: var(--c); background: color-mix(in srgb, var(--c) 10%, var(--surface)); }
+.choice[data-setting][aria-pressed="true"] { border-color: var(--c); }
+.hl-work { border: 1.5px solid var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.hl-val { font-weight: 900; font-size: 1.06em; }
+.hl-val.good { color: var(--good); } .hl-val.bad { color: var(--bad); }

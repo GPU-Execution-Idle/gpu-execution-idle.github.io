@@ -1,4 +1,4 @@
-// "Build a controller" simulation on a real coding-agent trace. Pure functions, no UI.
+// "Build your controller" simulation on a real coding-agent trace. Pure functions, no UI.
 // Mirrors simulate() in trace-analysis/extract_controller_trace.py (a test checks they agree).
 //
 // For each execution-idle period (end of one inference → start of the next):
