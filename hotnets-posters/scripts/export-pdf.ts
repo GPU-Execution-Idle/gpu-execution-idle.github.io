@@ -11,7 +11,7 @@ import { serveDir } from 'jsr:@std/http@1.0.21/file-server';
 const HERE = new URL('.', import.meta.url).pathname;
 const DIST = `${HERE}../dist`;
 const OUT = `${HERE}../pdf`;
-const BASE = '/hotnets26-presentation/';
+const BASE = '/hotnets26-poster/';
 const CHROME = Deno.env.get('CHROME_PATH') ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
 const server = Deno.serve({ port: 0, onListen: () => {} }, (req) => {

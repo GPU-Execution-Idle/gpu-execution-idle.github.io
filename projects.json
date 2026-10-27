@@ -5,7 +5,7 @@
   },
   "projects": [
     {
-      "path": "hotnets26-presentation",
+      "path": "hotnets26-poster",
       "title": "The Network Should Wake the GPU",
       "description": "Interactive poster for our HotNets 2026 paper, plus the printable paper poster.",
       "source": "hotnets-posters/dist"

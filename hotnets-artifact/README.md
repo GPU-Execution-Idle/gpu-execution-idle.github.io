@@ -40,7 +40,7 @@ deno test --allow-read=. tests/           # simulation, causality and trace-data
 ## Deploy
 
 This folder is part of the `gpu-execution-idle.github.io` repository; the workflow at the
-repository root tests it and publishes `web/` at `/hotnets26-presentation/` (see the root
+repository root tests it and publishes `web/` at `/hotnets26-demo/` (see the root
 README). Routes live in the URL hash (`#/explore`, `#/build`) and all asset paths are relative,
 so the site works under any path and survives refreshes. Unknown routes (including old
 `#/scoreboard`, `#/a0`–`#/a2` links) redirect to the right page.

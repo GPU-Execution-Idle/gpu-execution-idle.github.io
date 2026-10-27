@@ -7,7 +7,7 @@ Two coordinated posters built from one content file:
 | `/` | **Interactive web poster**, ready to present: a title banner and the three claims with their subquestions (1.1–3.3) on one screen. Opening a question extends an answer card below it with one takeaway and one small interactive figure. |
 | `/poster/` | **Paper poster**: three headlines, a closing invitation and a QR code to the web poster. It is built in HTML/CSS for the browser, fullscreen and print. |
 
-Deployed at `https://gpu-execution-idle.github.io/hotnets26-presentation/`. The paper poster is at `…/hotnets26-presentation/poster/`, and a question deep link looks like `…/hotnets26-presentation/#c2-q1`.
+Deployed at `https://gpu-execution-idle.github.io/hotnets26-poster/`. The paper poster is at `…/hotnets26-poster/poster/`, and a question deep link looks like `…/hotnets26-poster/#c2-q1`.
 
 This project is separate from the demo (`../hotnets-artifact`), the video (`../hotnets-video`) and the paper.
 
@@ -17,9 +17,9 @@ The project uses React 18, TypeScript and Vite 5, run through [Deno](https://den
 
 ```bash
 deno install           # dependencies into node_modules/
-deno task dev          # http://localhost:5173/hotnets26-presentation/
+deno task dev          # http://localhost:5173/hotnets26-poster/
 deno task build        # type-check, then build into dist/ (includes dist/poster/index.html)
-deno task preview      # serve dist/ at http://localhost:4173/hotnets26-presentation/
+deno task preview      # serve dist/ at http://localhost:4173/hotnets26-poster/
 ```
 
 ## Interactive poster
@@ -75,7 +75,7 @@ The numbers live in `src/content/data.ts`, with a comment on each block.
 
 ## Deployment
 
-The repository's GitHub Pages workflow (`.github/workflows/pages.yml`) runs `deno install && deno task build` here. `site/build.py` then copies `dist/` to `/hotnets26-presentation/`, as listed in `../projects.json`. The build writes `dist/poster/index.html`, so a direct link to `/poster/` works on any static host. Question deep links use the URL hash.
+The repository's GitHub Pages workflow (`.github/workflows/pages.yml`) runs `deno install && deno task build` here. `site/build.py` then copies `dist/` to `/hotnets26-poster/`, as listed in `../projects.json`. The build writes `dist/poster/index.html`, so a direct link to `/poster/` works on any static host. Question deep links use the URL hash.
 
 To host elsewhere, build with `BASE_PATH=/your/path/` and set `VITE_POSTER_URL` to the new public URL.
 
