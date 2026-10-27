@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}}</title>
+  <meta name="description" content="{{tagline}}">
+  <style>
+    :root { --p1: #55309a; --p2: #39206c; --lav: #e1d5f7; }
+    * { box-sizing: border-box; }
+    html { background: var(--p2); -webkit-text-size-adjust: 100%; }
+    body { margin: 0; min-height: 100vh; color: #fff; font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(160deg, var(--p1), var(--p2)) fixed; }
+    main { max-width: 560px; margin: 0 auto; padding: 56px 16px 40px; }
+    h1 { font-size: clamp(2.1rem, 9vw, 2.8rem); line-height: 1.05; letter-spacing: -.03em; margin: 0 0 10px; }
+    .tagline { color: var(--lav); margin: 0 0 28px; }
+    .card { display: block; padding: 16px 18px; margin: 12px 0; border-radius: 14px; color: inherit; text-decoration: none;
+      background: rgb(255 255 255 / .08); border: 1px solid rgb(255 255 255 / .18); }
+    a.card:hover, a.card:focus-visible { background: rgb(255 255 255 / .14); outline: none; }
+    .card h2 { font-size: 1.1rem; margin: 0 0 4px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .card p { margin: 0; color: var(--lav); font-size: .95rem; }
+    .status { font-size: .72rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; border: 1px solid rgb(255 255 255 / .4); color: var(--lav); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>{{title}}</h1>
+    <p class="tagline">{{tagline}}</p>
+    <nav aria-label="Projects">
+      {{projects}}
+    </nav>
+  </main>
+</body>
+</html>

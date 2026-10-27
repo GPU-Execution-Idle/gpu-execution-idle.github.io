@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Not found</title>
+  <script>
+    // GitHub Pages serves this page for every missing path on the site. Send visitors to
+    // the project the path belongs to (keeping any #route), or to the landing page.
+    var projects = {{project_paths}};
+    var parts = location.pathname.split('/').filter(Boolean);
+    var site = parts.length && /\.github\.io$/.test(location.hostname) && projects.indexOf(parts[0]) < 0 && projects.indexOf(parts[1]) >= 0
+      ? '/' + parts.shift() + '/' : '/';   // also works when the site itself lives under a repo path
+    var project = projects.indexOf(parts[0]) >= 0 ? parts[0] + '/' : '';
+    location.replace(site + project + location.hash);
+  </script>
+</head>
+<body><p><a href="/">Go to the start page</a></p></body>
+</html>

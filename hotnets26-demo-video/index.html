@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Network Should Wake the GPU · Demo video</title>
+  <meta name="description" content="Two-minute animated pitch for the HotNets 2026 paper “The Network Should Wake the GPU.”">
+  <style>
+    :root { --p1: #55309a; --p2: #39206c; --lav: #e1d5f7; }
+    * { box-sizing: border-box; }
+    html { background: var(--p2); -webkit-text-size-adjust: 100%; }
+    body { margin: 0; min-height: 100vh; color: #fff; font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(160deg, var(--p1), var(--p2)) fixed; }
+    main { max-width: 960px; margin: 0 auto; padding: 40px 16px; }
+    .label { font-size: .78rem; letter-spacing: .16em; text-transform: uppercase; color: var(--lav); margin: 0 0 8px; }
+    h1 { font-size: clamp(1.8rem, 6vw, 2.6rem); line-height: 1.1; margin: 0 0 20px; }
+    video { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; background: #0b1220; }
+    .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .links a { padding: 10px 16px; border-radius: 12px; font-weight: 700; text-decoration: none; }
+    .primary { background: #fff; color: var(--p2); }
+    .secondary { color: #fff; border: 1px solid rgb(255 255 255 / .4); }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="label">HotNets 2026 · Demo video</p>
+    <h1>The Network Should Wake the GPU</h1>
+    <video controls playsinline preload="metadata" poster="poster.jpg">
+      <source src="hotnets26-demo-video.mp4" type="video/mp4">
+      <a href="hotnets26-demo-video.mp4">Download the video</a>
+    </video>
+    <div class="links">
+      <a class="primary" href="../hotnets26-presentation/">Try the interactive demo →</a>
+      <a class="secondary" href="hotnets26-demo-video.mp4" download>Download MP4</a>
+    </div>
+  </main>
+</body>
+</html>

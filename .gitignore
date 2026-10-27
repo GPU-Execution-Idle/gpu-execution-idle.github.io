@@ -1,0 +1,13 @@
+# Only the website is published from this folder.
+.DS_Store
+__pycache__/
+_site/
+
+# The video's source project stays local; its published page lives in hotnets26-demo-video/.
+hotnets-video/
+# Personal speaking notes.
+Transition.md
+
+# hotnets-artifact: the raw L40S traces are ~10 GB (publish data via Releases/Zenodo, see README)
+hotnets-artifact/trace/
+hotnets-artifact/trace-analysis/raw/

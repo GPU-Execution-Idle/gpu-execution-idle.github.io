@@ -1,0 +1,41 @@
+{
+  "version": "synthetic-v1",
+  "synthetic": true,
+  "scenarios": [
+    {
+      "id": "a2-browse-typical",
+      "session_id": "s18",
+      "seq": 13,
+      "title": "A typical page load",
+      "story": "The web agent loads another results page."
+    },
+    {
+      "id": "a2-browse-tail",
+      "session_id": "s14",
+      "seq": 13,
+      "title": "A page that hangs",
+      "story": "The web agent loads a page from a slow third-party site."
+    },
+    {
+      "id": "a2-browse-fast",
+      "session_id": "s04",
+      "seq": 7,
+      "title": "A cached page",
+      "story": "The web agent revisits a page it may have loaded before."
+    },
+    {
+      "id": "a2-tests",
+      "session_id": "s21",
+      "seq": 11,
+      "title": "Test suite again",
+      "story": "The coding agent reruns the test suite after a fix."
+    },
+    {
+      "id": "a2-exec-combined",
+      "session_id": "s11",
+      "seq": 5,
+      "title": "Snippet with a surprise",
+      "story": "The coding agent runs a Python snippet. You now also choose the power state."
+    }
+  ]
+}
