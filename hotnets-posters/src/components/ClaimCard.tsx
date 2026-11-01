@@ -1,15 +1,15 @@
-// One claim. At rest it shows only its headline; hovering or focusing it reveals the numbered
-// subquestions (1.1, 1.2, …). Opening a question shows its answer card right below it, while the
-// poster dims the other claims and hides this claim's other questions.
-import { useState, type KeyboardEvent } from 'react';
+// One part of the argument, as a foldable card: its heading (e.g. "The Hidden Energy Problem")
+// shows by default, and unfolding it reveals its numbered questions (1.1, 1.2, …). Opening a
+// question expands its answer card in place. A deep link to a question unfolds its part.
+import { useEffect, useState, type KeyboardEvent } from 'react';
 import { questionAnchor, type Claim, type Question } from '../content/claims';
 import { AnswerFigure } from './Figures';
 
 type Props = { claim: Claim; open: string | null; onToggle: (anchor: string) => void; onClose: () => void };
 
-// Arrow keys move between the visible question rows; Home/End jump to the ends.
+// Arrow keys move between the visible part headings and question rows; Home/End jump to the ends.
 function onRowKey(e: KeyboardEvent<HTMLButtonElement>) {
-  const rows = [...document.querySelectorAll<HTMLButtonElement>('.q-row')].filter((r) => r.offsetParent);
+  const rows = [...document.querySelectorAll<HTMLButtonElement>('.part-toggle, .q-row')].filter((r) => !r.closest('[inert]'));
   const i = rows.indexOf(e.currentTarget);
   const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: rows.length - 1 }[e.key];
   if (to === undefined || !rows[to]) return;
@@ -17,13 +17,15 @@ function onRowKey(e: KeyboardEvent<HTMLButtonElement>) {
   rows[to].focus();
 }
 
-// The takeaway can follow the figure's buttons (e.g. which setting is selected).
+// The takeaway can follow the figure's buttons (e.g. which setting is selected); a blank line
+// in it starts a new paragraph.
 function AnswerCard({ q, onClose }: { q: Question; onClose: () => void }) {
   const [choice, setChoice] = useState(q.choice ?? '');
+  const text = typeof q.takeaway === 'function' ? q.takeaway(choice) : q.takeaway;
   return (
     <div className="answer-card">
       <button type="button" className="card-close" onClick={onClose} aria-label="Close answer">×</button>
-      <p className="takeaway">{typeof q.takeaway === 'function' ? q.takeaway(choice) : q.takeaway}</p>
+      {text.split('\n\n').map((para, i) => <p key={i} className="takeaway">{para}</p>)}
       {q.figure ? <AnswerFigure figure={q.figure} choice={choice} setChoice={setChoice} /> : null}
     </div>
   );
@@ -31,28 +33,33 @@ function AnswerCard({ q, onClose }: { q: Question; onClose: () => void }) {
 
 export function ClaimCard({ claim, open, onToggle, onClose }: Props) {
   const anchors = claim.questions.map((q) => questionAnchor(claim, q));
-  const focused = open !== null && anchors.includes(open);
-  const dimmed = open !== null && !focused;
-  // Touch screens have no hover: a tap on the headline reveals the questions.
-  const [peek, setPeek] = useState(false);
+  const hasOpen = open !== null && anchors.includes(open);
+  const [unfolded, setUnfolded] = useState(hasOpen);
+  useEffect(() => { if (hasOpen) setUnfolded(true); }, [hasOpen]);
+  const fold = () => {
+    if (unfolded && hasOpen) onClose(); // folding a part also closes its open answer
+    setUnfolded(!unfolded);
+  };
   return (
-    <section className={`claim${focused ? ' focused' : ''}${dimmed ? ' dimmed' : ''}${peek ? ' peek' : ''}`}
-      id={claim.id} aria-labelledby={`${claim.id}-title`} onClick={dimmed ? onClose : undefined}>
-      <header className="claim-head" onClick={() => !open && setPeek((p) => !p)}>
-        <span className="label claim-no">Claim #{claim.n}</span>
-        <h2 id={`${claim.id}-title`}>{claim.text}</h2>
-        <span className="q-hint" aria-hidden="true">{claim.questions.length} questions</span>
-      </header>
-      <div className="q-wrap">
+    <section className={`claim${unfolded ? ' unfolded' : ''}`} id={claim.id} aria-labelledby={`${claim.id}-title`}>
+      <h2 className="part-head">
+        <button type="button" className="part-toggle" aria-expanded={unfolded} aria-controls={`${claim.id}-questions`}
+          onClick={fold} onKeyDown={onRowKey}>
+          <span className="part-no">{claim.n}</span>
+          <span className="part-title" id={`${claim.id}-title`}>{claim.part}</span>
+          <span className="part-icon" aria-hidden="true" />
+        </button>
+      </h2>
+      <div className="part-body" id={`${claim.id}-questions`} {...(unfolded ? {} : { inert: '' })}>
         <ol className="questions">
           {claim.questions.map((q, i) => {
             const a = anchors[i];
             const isOpen = open === a;
             return (
-              <li key={q.id} id={a} className={`question${isOpen ? ' open' : ''}${focused && !isOpen ? ' hidden' : ''}`}>
+              <li key={q.id} id={a} className={`question${isOpen ? ' open' : ''}`}>
                 <h3>
                   <button type="button" className="q-row" aria-expanded={isOpen} aria-controls={`${a}-answer`}
-                    tabIndex={dimmed ? -1 : 0} onClick={(e) => { e.stopPropagation(); onToggle(a); }} onKeyDown={onRowKey}>
+                    onClick={() => onToggle(a)} onKeyDown={onRowKey}>
                     <span className="q-no">{claim.n}.{i + 1}</span>
                     <span className="q-text">{q.q}</span>
                     <span className="q-icon" aria-hidden="true" />

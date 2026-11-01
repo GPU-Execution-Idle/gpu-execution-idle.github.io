@@ -7,7 +7,7 @@ own path.
 | URL | Content | Source |
 |---|---|---|
 | `/` | Landing page (generated) | `site/` + `projects.json` |
-| `/hotnets26-poster/` | HotNets 2026 interactive poster, and the paper poster at `/poster/` | `hotnets-posters/` (built to `dist/`) |
+| `/hotnets26-poster/` | HotNets 2026 notebook (the interactive poster, listed as "Notebook" on the landing page), and the paper poster at `/poster/` | `hotnets-posters/` (built to `dist/`) |
 | `/hotnets26-demo-video/` | Two-minute demo video | `hotnets26-demo-video/` |
 | `/datasets/` | Measurement data (coming soon) | — |
 

@@ -7,8 +7,7 @@
     "dev": "vite",
     "build": "tsc -p . && vite build",
     "preview": "vite preview",
-    "pdf": "deno run -A scripts/export-pdf.ts",
-    "traces": "deno run -A scripts/extract-traces.ts"
+    "pdf": "deno run -A scripts/export-pdf.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.2.8",

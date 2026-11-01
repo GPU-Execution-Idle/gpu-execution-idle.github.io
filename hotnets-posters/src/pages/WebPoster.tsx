@@ -1,12 +1,11 @@
-// Interactive poster, ready to present. At rest: the title, the control-loop contrast and the three
-// claims. Hovering a claim reveals its questions; opening one shows its answer card and dims
-// everything else, and closing the card returns to the three claims.
+// Interactive poster, ready to present: the title, then the argument's three parts in one column,
+// each a heading over its questions. All answers start collapsed; opening a question expands its
+// answer in place (one at a time) and the headings stay visible.
 // Keys: ↑/↓ move between questions, Enter opens, Esc closes, F toggles fullscreen.
 // Deep links: /#c1-q2 opens that question; the hash follows the open question.
 import { useCallback, useEffect, useState } from 'react';
 import { CLAIMS, PAPER, questionAnchor } from '../content/claims';
 import { ClaimCard } from '../components/ClaimCard';
-import { ControlLoops } from '../components/ControlLoops';
 import '../styles/web.css';
 
 const ALL = CLAIMS.flatMap((c) => c.questions.map((q) => questionAnchor(c, q)));
@@ -22,7 +21,6 @@ export function WebPoster() {
   const show = useCallback((id: string | null) => {
     setOpen(id);
     history.replaceState(null, '', id ? `#${id}` : location.pathname + location.search);
-    if (!id) window.scrollTo({ top: 0, behavior: 'smooth' }); // back to the three claims
   }, []);
   const toggle = useCallback((id: string) => show(open === id ? null : id), [open, show]);
 
@@ -56,7 +54,7 @@ export function WebPoster() {
   }, []);
 
   return (
-    <div className={`web${open ? ' focus' : ''}`} data-focus={open ? open.slice(0, 2) : undefined}>
+    <div className="web">
       <header className="banner">
         <h1>The Network Should <em>Wake</em> the&nbsp;GPU</h1>
         <button type="button" className="fs-toggle" onClick={toggleFullscreen} aria-pressed={full}
@@ -64,9 +62,6 @@ export function WebPoster() {
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d={full ? 'M6 2v4H2M10 2v4h4M6 14v-4H2M10 14v-4h4' : 'M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4'} /></svg>
         </button>
       </header>
-      <div className="contrast" aria-hidden={open ? true : undefined}>
-        <div className="contrast-inner"><ControlLoops /></div>
-      </div>
       <main className="claims" aria-label={PAPER.title}>
         {CLAIMS.map((c) => <ClaimCard key={c.id} claim={c} open={open} onToggle={toggle} onClose={() => show(null)} />)}
       </main>

@@ -1,6 +1,6 @@
 // Single source of truth for both posters: title, claims, subquestions and their answers.
-// Each answer is one takeaway and one figure (src/components/Figures.tsx), drawn from ./data.ts
-// and ./traces.ts. A question without a figure yet uses `placeholder`.
+// Each answer is one takeaway (paragraphs separated by a blank line) and at most one figure
+// (src/components/Figures.tsx), drawn from ./data.ts. A question without a figure yet uses `placeholder`.
 
 export const PAPER = {
   venue: 'HotNets 2026',
@@ -9,7 +9,7 @@ export const PAPER = {
   qrLabel: 'Explore the evidence',
 };
 
-export type FigureId = 'idle-power' | 'exec-idle' | 'concurrency' | 'agent-trace' | 'reactive' | 'wake-lead' | 'tradeoff';
+export type FigureId = 'idle-power' | 'exec-idle' | 'reactive' | 'wake-lead' | 'tradeoff';
 
 export type Question = {
   id: string; // deep link: #<claim id>-<question id>, e.g. #c1-q2
@@ -20,28 +20,23 @@ export type Question = {
   choice?: string; // the figure's initial choice, when the takeaway depends on it
 };
 
-export type Claim = { id: string; n: number; text: string; questions: Question[] };
+// `part` titles the claim's section on the web poster; `text` is the claim as the paper poster states it.
+export type Claim = { id: string; n: number; part: string; text: string; questions: Question[] };
 
 export const CLAIMS: Claim[] = [
   {
-    id: 'c1', n: 1, text: 'We’ve Uncovered a Hidden Cost of GPU Idleness.',
+    id: 'c1', n: 1, part: 'The Hidden Energy Problem', text: 'We’ve Uncovered a Hidden Cost of GPU Idleness.',
     questions: [
-      { id: 'q1', q: 'Does an idle GPU really consume that much power?',
-        takeaway: 'Yes. With a program loaded but no work, a GPU draws 7–\u206070\u00a0W above true idle.',
+      { id: 'q1', q: 'What is the hidden energy problem with GPUs?',
+        takeaway: 'GPUs can waste energy even when doing no useful work. When a program remains loaded but the GPU is not computing—a state we call execution-idle—the GPU can draw 30–\u206070\u00a0W more than when truly idle.',
         figure: 'idle-power' },
       { id: 'q2', q: 'How common is execution-idle in real workloads?',
-        takeaway: 'We measured it in a university cluster, agentic workloads and serving workloads.',
+        takeaway: 'We measured it in serving and agentic workloads.',
         figure: 'exec-idle' },
-      { id: 'q3', q: 'Why not just keep GPUs busy?',
-        takeaway: 'Often there isn’t enough work, as with a personal AI agent. And packing in more isn’t always desirable: extra agent sessions slow each one down.',
-        figure: 'concurrency' },
-      { id: 'q4', q: 'What does execution-idle look like in an agentic workload?',
-        takeaway: 'Agents make tens to hundreds of tool calls, each idling the GPU for under a second to tens of seconds.',
-        figure: 'agent-trace' },
     ],
   },
   {
-    id: 'c2', n: 2, text: 'Today’s GPUs Are Bad at Waking Up.',
+    id: 'c2', n: 2, part: 'The Challenge of GPU Power Management', text: 'Today’s GPUs Are Bad at Waking Up.',
     questions: [
       { id: 'q1', q: 'Why not just lower the GPU’s frequency when it’s idle?',
         takeaway: 'You can, but waking the GPU back up adds latency.',
@@ -52,15 +47,14 @@ export const CLAIMS: Claim[] = [
     ],
   },
   {
-    id: 'c3', n: 3, text: 'GPU Power Management Is Not Just a GPU Problem.',
+    id: 'c3', n: 3, part: 'The Case for Network-Aware Control', text: 'GPU Power Management Is Not Just a GPU Problem.',
     questions: [
       { id: 'q1', q: 'Why use network signals to wake the GPU?',
-        takeaway: 'The request scheduler (in serving) or the browser (in web agents) knows when work is coming, early enough to wake the GPU and hide the transition.' },
-      { id: 'q2', q: 'How does our approach compare with the baseline on energy and latency?',
+        takeaway: 'GPU work is often triggered by external events, such as incoming inference requests or browser responses. These events can become visible to the request scheduler, network stack, or browser before the GPU receives work.\n\n'
+          + 'By observing network traffic or predicting when responses will arrive, the system can anticipate GPU demand and initiate wakeup early—potentially hiding hundreds of milliseconds of frequency recovery without delaying inference.' },
+      { id: 'q2', q: 'Can network-aware control save energy without hurting latency?',
         takeaway: 'Our approach keeps large energy savings at Default (no scaling) latency.',
         figure: 'tradeoff' },
-      { id: 'q3', q: 'Can signals come from other system components?',
-        takeaway: 'Yes. Any component that runs just before GPU work can wake it, as long as its remaining time to that work covers the GPU’s wake-up latency.' },
     ],
   },
 ];

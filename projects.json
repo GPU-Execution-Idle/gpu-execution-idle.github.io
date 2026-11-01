@@ -6,7 +6,7 @@
   "projects": [
     {
       "path": "hotnets26-poster",
-      "title": "Poster",
+      "title": "Notebook",
       "source": "hotnets-posters/dist"
     },
     {

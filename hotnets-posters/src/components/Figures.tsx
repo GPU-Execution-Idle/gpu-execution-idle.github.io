@@ -1,9 +1,8 @@
-// One small figure per question, drawn from content/data.ts and content/traces.ts.
+// One small figure per question, drawn from content/data.ts.
 // Each has at most one row of buttons, like the answers in the interactive demo.
 import { useState } from 'react';
 import type { FigureId } from '../content/claims';
-import { CONCURRENCY, EXEC_IDLE, IDLE_POWER, REACTIVE, TRADEOFF, WAKE_LEAD_MS } from '../content/data';
-import { AGENT_TRACES } from '../content/traces';
+import { EXEC_IDLE, IDLE_POWER, REACTIVE, TRADEOFF, WAKE_LEAD_MS } from '../content/data';
 
 type Opt<K extends string> = readonly (readonly [K, string])[];
 export type FigureProps = { choice?: string; setChoice?: (c: string) => void };
@@ -35,12 +34,11 @@ const W = 400;
 const SETTINGS = [['sm', 'SM at minimum'], ['smMem', 'SM + memory at minimum']] as const;
 const SETTING_NAME = Object.fromEntries(SETTINGS) as Record<'sm' | 'smMem', string>;
 
-// 1.1: true idle vs. execution-idle power on nine GPUs; the execution-idle bars appear on demand.
+// 1.1: true idle vs. execution-idle power on data-center and workstation GPUs; the execution-idle bars appear on demand.
 function IdlePower() {
   const [shown, setShown] = useState<'idle' | 'exec'>('exec');
-  const H = 232, base = 150, top = 30, max = 200, y = (v: number) => base - (v / max) * (base - top);
+  const H = 172, base = 150, top = 30, max = 200, y = (v: number) => base - (v / max) * (base - top);
   const slot = (W - 8) / IDLE_POWER.length, x0 = 4;
-  const groups = [...new Set(IDLE_POWER.map((g) => g.group))];
   return (
     <>
       <Seg label="Program state" value={shown} onChange={setShown}
@@ -58,17 +56,7 @@ function IdlePower() {
                 <rect className="bar exec" x={cx + 1} y={y(g.execIdle)} width="16" height={base - y(g.execIdle)} rx="2" />
                 <text className="val tiny strong" x={cx + 9} y={y(g.execIdle) - 4} textAnchor="middle">+{g.execIdle - g.trueIdle}</text>
               </g>
-              <text className="tick" x={cx + 4} y={base + 12} textAnchor="end" transform={`rotate(-35 ${cx + 4} ${base + 12})`}>{g.gpu}</text>
-            </g>
-          );
-        })}
-        {groups.map((name) => {
-          const idx = IDLE_POWER.map((g, i) => (g.group === name ? i : -1)).filter((i) => i >= 0);
-          const a = x0 + slot * idx[0] + 4, b = x0 + slot * (idx.at(-1)! + 1) - 4;
-          return (
-            <g key={name}>
-              <line className="bracket" x1={a} x2={b} y1={base + 60} y2={base + 60} />
-              <text className="tick small" x={(a + b) / 2} y={base + 74} textAnchor="middle">{name}</text>
+              <text className="tick" x={cx} y={base + 17} textAnchor="middle">{g.gpu}</text>
             </g>
           );
         })}
@@ -77,12 +65,12 @@ function IdlePower() {
   );
 }
 
-// 1.2: execution-idle time and ideal energy savings, per workload, in one of three settings.
+// 1.2: execution-idle time and ideal energy savings, per workload: bursty serving or agentic.
 function ExecIdle() {
-  const [key, setKey] = useState<keyof typeof EXEC_IDLE>('cluster');
+  const [key, setKey] = useState<keyof typeof EXEC_IDLE>('serving');
   const t = EXEC_IDLE[key];
   const L = 112, track = 226, row = 36, top = 30, x = (v: number) => (v / 100) * track;
-  const H = top + 5 * row;
+  const H = top + Math.max(...Object.values(EXEC_IDLE).map((s) => s.rows.length)) * row;
   return (
     <>
       <Seg label="Setting" value={key} onChange={setKey}
@@ -94,7 +82,7 @@ function ExecIdle() {
           return (
             <g key={r.name}>
               <text className="tick strong" x={L - 8} y={yy + 12} textAnchor="end">{r.name}</text>
-              {'jobs' in r ? <text className="tick small" x={L - 8} y={yy + 25} textAnchor="end">{r.jobs.toLocaleString('en-US')} jobs</text> : null}
+              <text className="tick small" x={L - 8} y={yy + 25} textAnchor="end">{r.gpu}</text>
               <rect className="track" x={L} y={yy} width={track} height="16" rx="3" />
               <rect className="bar exec-soft sized" x={L} y={yy} width={x(r.frac)} height="16" rx="3" />
               <rect className="bar exec sized" x={L} y={yy + 4} width={x(r.savings)} height="8" rx="2" />
@@ -103,86 +91,6 @@ function ExecIdle() {
             </g>
           );
         })}
-      </svg>
-    </>
-  );
-}
-
-// 1.3: what more concurrent agents on one H100 do to idle time, task time and memory.
-function Concurrency() {
-  const [m, setM] = useState<keyof typeof CONCURRENCY.metrics>('idle');
-  const d = CONCURRENCY.metrics[m];
-  const L = 34, R = 18, top = 42, bot = 150, H = 176;
-  const [lo, hi] = m === 'slowdown' ? [1, 3.6] : m === 'idle' ? [0, 50] : [0, 100];
-  const x = (i: number) => L + (i / (CONCURRENCY.levels.length - 1)) * (W - L - R);
-  const y = (v: number) => bot - ((v - lo) / (hi - lo)) * (bot - top);
-  const fmt = (v: number) => (d.unit === '×' ? `${v.toFixed(2)}×` : v.toFixed(1));
-  const ticks = m === 'slowdown' ? [1, 2, 3] : m === 'idle' ? [0, 15, 30, 45] : [0, 30, 60, 90];
-  const series = [{ k: 'browse', name: 'BrowseComp', v: d.browse }, { k: 'swe', name: 'DeepSWE', v: d.swe }] as const;
-  return (
-    <>
-      <Seg label="Metric" value={m} onChange={setM}
-        options={[['idle', 'Execution-idle'], ['slowdown', 'Task slowdown'], ['kv', 'Memory']] as const} />
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${d.label} at 1, 2, 4, 6 concurrent agents on an H100. BrowseComp: ${d.browse.map(fmt).join(', ')}. DeepSWE: ${d.swe.map(fmt).join(', ')}.`}>
-        <text className="tick small" x={L} y="13">{d.unit === '%' ? `${d.label} (%)` : d.label} · one H100</text>
-        <g className="legend-lines">
-          <line className="ln browse" x1={L} x2={L + 16} y1="26" y2="26" /><circle className="pt browse" cx={L + 8} cy="26" r="3" /><text className="tick small" x={L + 21} y="30">BrowseComp</text>
-          <line className="ln swe" x1={L + 100} x2={L + 116} y1="26" y2="26" /><rect className="pt swe" x={L + 105} y="23" width="6" height="6" /><text className="tick small" x={L + 121} y="30">DeepSWE</text>
-        </g>
-        {ticks.map((t) => (
-          <g key={t}>
-            <line className="grid" x1={L} x2={W - R} y1={y(t)} y2={y(t)} />
-            <text className="tick small" x={L - 6} y={y(t) + 4} textAnchor="end">{d.unit === '×' ? `${t}×` : t}</text>
-          </g>
-        ))}
-        {series.map((s) => (
-          <g key={s.k}>
-            <polyline className={`ln ${s.k}`} points={s.v.map((v, i) => `${x(i)},${y(v)}`).join(' ')} />
-            {s.v.map((v, i) => {
-              const other = (s.k === 'browse' ? d.swe : d.browse)[i];
-              const above = v >= other;
-              // The higher series is labeled above its point, the lower one below it (below-right near
-              // the axis). When both show the same value, only one label is drawn.
-              const same = fmt(v) === fmt(other);
-              const beside = !above && y(v) > bot - 18;
-              const lx = beside ? x(i) + 7 : x(i) + (i === 0 ? 4 : 0), ly = beside ? y(v) + 12 : y(v) + (above ? -8 : 15);
-              return (
-                <g key={i}>
-                  {s.k === 'browse' ? <circle className="pt browse" cx={x(i)} cy={y(v)} r="4" /> : <rect className="pt swe" x={x(i) - 3.5} y={y(v) - 3.5} width="7" height="7" />}
-                  {same && s.k === 'swe' ? null : <text className={`val tiny ${same ? 'both' : `${s.k}-t`}`} x={lx} y={ly} textAnchor={beside || i === 0 ? 'start' : 'middle'}>{fmt(v)}</text>}
-                </g>
-              );
-            })}
-          </g>
-        ))}
-        {CONCURRENCY.levels.map((c, i) => <text key={c} className="tick" x={x(i)} y={bot + 15} textAnchor="middle">{c}</text>)}
-        <text className="tick small" x={(L + W - R) / 2} y={H - 2} textAnchor="middle">concurrent agents</text>
-      </svg>
-    </>
-  );
-}
-
-// 1.4: one real coding-agent task: GPU inference interleaved with tool calls.
-function AgentTrace() {
-  const [j, setJ] = useState<'0' | '1'>('0');
-  const t = AGENT_TRACES[Number(j)];
-  const x = (s: number) => (s / t.totalS) * W;
-  const idle = t.calls.reduce((a, [, d]) => a + d, 0);
-  const longest = Math.max(...t.calls.map(([, d]) => d));
-  const minutes = Math.floor(t.totalS / 60);
-  return (
-    <>
-      <Seg label="Task" value={j} onChange={setJ} options={AGENT_TRACES.map((_, i) => [String(i) as '0' | '1', `Task ${i + 1}`] as const)} />
-      <svg viewBox={`0 0 ${W} 122`} role="img" aria-label={`${t.task}: ${t.calls.length} tool calls over ${(t.totalS / 60).toFixed(1)} minutes; the GPU is idle ${Math.round((100 * idle) / t.totalS)}% of the time; the longest tool call lasts ${longest.toFixed(0)} s.`}>
-        <text className="tick strong" x="0" y="12">SWE-bench · {t.task.replace('__', '/')}</text>
-
-        <rect className="bar infer" x="0" y="22" width={W} height="34" rx="4" />
-        {t.calls.map(([s, d], i) => <rect key={i} className="bar tool" x={x(s)} y="18" width={Math.max(0.9, x(d))} height="42" />)}
-        {Array.from({ length: minutes + 1 }, (_, m) => (
-          <text key={m} className="tick small" x={x(m * 60)} y="74" textAnchor={m === 0 ? 'start' : 'middle'}>{m} min</text>
-        ))}
-        <text className="val strong" x="0" y="94">{t.calls.length} tool calls · GPU idle {Math.round((100 * idle) / t.totalS)}% of the time · longest call {longest.toFixed(0)} s</text>
-        <Legend x={0} y={116} items={[['infer', 'GPU inference'], ['tool', 'tool call (GPU idle)']]} />
       </svg>
     </>
   );
@@ -325,8 +233,7 @@ function starPath(cx: number, cy: number, r: number) {
 }
 
 const FIGURES: Record<FigureId, (p: FigureProps) => JSX.Element> = {
-  'idle-power': IdlePower, 'exec-idle': ExecIdle, concurrency: Concurrency, 'agent-trace': AgentTrace,
-  reactive: Reactive, 'wake-lead': WakeLead, tradeoff: Tradeoff,
+  'idle-power': IdlePower, 'exec-idle': ExecIdle, reactive: Reactive, 'wake-lead': WakeLead, tradeoff: Tradeoff,
 };
 
 export function AnswerFigure({ figure, ...props }: { figure: FigureId | { placeholder: string } } & FigureProps) {
