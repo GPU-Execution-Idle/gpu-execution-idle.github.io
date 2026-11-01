@@ -17,6 +17,18 @@ function onRowKey(e: KeyboardEvent<HTMLButtonElement>) {
   rows[to].focus();
 }
 
+// **text** -> bold.
+const inline = (t: string) => t.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : part));
+
+// A takeaway paragraph: a bulleted list when every line starts with "- ", otherwise a paragraph.
+function Para({ text }: { text: string }) {
+  const lines = text.split('\n');
+  if (lines.every((l) => l.startsWith('- '))) {
+    return <ul className="takeaway takeaway-list">{lines.map((l, i) => <li key={i}>{inline(l.slice(2))}</li>)}</ul>;
+  }
+  return <p className="takeaway">{inline(text)}</p>;
+}
+
 // The takeaway can follow the figure's buttons (e.g. which setting is selected); a blank line
 // in it starts a new paragraph.
 function AnswerCard({ q, onClose }: { q: Question; onClose: () => void }) {
@@ -25,7 +37,7 @@ function AnswerCard({ q, onClose }: { q: Question; onClose: () => void }) {
   return (
     <div className="answer-card">
       <button type="button" className="card-close" onClick={onClose} aria-label="Close answer">×</button>
-      {text.split('\n\n').map((para, i) => <p key={i} className="takeaway">{para}</p>)}
+      {text.split('\n\n').map((para, i) => <Para key={i} text={para} />)}
       {q.figure ? <AnswerFigure figure={q.figure} choice={choice} setChoice={setChoice} /> : null}
     </div>
   );

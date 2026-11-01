@@ -88,6 +88,9 @@
   font-family: var(--f-text); font-weight: 600; font-size: var(--ans); line-height: 1.45; color: var(--ink);
 }
 .answer-card:not(:has(.fig)) .takeaway { margin-bottom: 4px; }
+.takeaway-list { padding-left: 1.2em; }
+.takeaway-list li + li { margin-top: .45em; }
+.takeaway strong { font-weight: 750; }
 
 /* Figure buttons, like the answers in the interactive demo. */
 /* One row of buttons; a long label wraps inside its button instead of adding a row. */

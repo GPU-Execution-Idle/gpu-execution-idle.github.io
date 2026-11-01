@@ -1,6 +1,7 @@
 // Single source of truth for both posters: title, claims, subquestions and their answers.
-// Each answer is one takeaway (paragraphs separated by a blank line) and at most one figure
-// (src/components/Figures.tsx), drawn from ./data.ts. A question without a figure yet uses `placeholder`.
+// Each answer is one takeaway and at most one figure. In a takeaway, a blank line starts a new
+// paragraph, a paragraph of lines starting with "- " is a bulleted list, and **text** is bold. The figure
+// comes from src/components/Figures.tsx, drawn from ./data.ts. A question without a figure yet uses `placeholder`.
 
 export const PAPER = {
   venue: 'HotNets 2026',
@@ -50,8 +51,11 @@ export const CLAIMS: Claim[] = [
     id: 'c3', n: 3, part: 'The Case for Network-Aware Control', text: 'GPU Power Management Is Not Just a GPU Problem.',
     questions: [
       { id: 'q1', q: 'Why use network signals to wake the GPU?',
-        takeaway: 'GPU work is often triggered by external events, such as incoming inference requests or browser responses. These events can become visible to the request scheduler, network stack, or browser before the GPU receives work.\n\n'
-          + 'By observing network traffic or predicting when responses will arrive, the system can anticipate GPU demand and initiate wakeup early—potentially hiding hundreds of milliseconds of frequency recovery without delaying inference.' },
+        takeaway: 'GPU work is often triggered by external events, such as incoming inference requests or responses from remote services. These events can be visible to the network and host before computation reaches the GPU.\n\n'
+          + 'There are two opportunities:\n\n'
+          + '- **Network observations reveal current demand.** Incoming requests or responses can trigger GPU wakeup before work is submitted.\n'
+          + '- **Network predictions anticipate future demand.** Request-arrival patterns or predicted response completion can provide an even earlier warning, helping hide slow GPU frequency recovery.\n\n'
+          + 'GPU power management should leverage both observations and predictions of network activity, rather than reacting only to GPU activity.' },
       { id: 'q2', q: 'Can network-aware control save energy without hurting latency?',
         takeaway: 'Our approach keeps large energy savings at Default (no scaling) latency.',
         figure: 'tradeoff' },
