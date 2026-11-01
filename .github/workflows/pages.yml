@@ -20,6 +20,9 @@ jobs:
       - name: Test the interactive demo
         working-directory: hotnets-artifact
         run: deno test --allow-read=. tests/
+      - name: Test the game
+        working-directory: hotnets-game
+        run: node tests/sim.test.mjs && node tests/jump-model.test.mjs
       - name: Build the HotNets posters
         working-directory: hotnets-posters
         run: deno install && deno task build

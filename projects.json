@@ -10,9 +10,14 @@
       "source": "hotnets-posters/dist"
     },
     {
-      "path": "hotnets26-demo-video",
+      "path": "hotnets26-video",
       "title": "Video",
       "source": "hotnets26-demo-video"
+    },
+    {
+      "path": "hotnets26-game",
+      "title": "Game",
+      "source": "hotnets-game/web"
     },
     {
       "path": "datasets",
@@ -21,6 +26,7 @@
     }
   ],
   "redirects": {
-    "hotnets26-poster": "hotnets26-notebook"
+    "hotnets26-poster": "hotnets26-notebook",
+    "hotnets26-demo-video": "hotnets26-video"
   }
 }
