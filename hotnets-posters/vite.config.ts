@@ -3,9 +3,9 @@ import react from '@vitejs/plugin-react';
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-// Published at https://gpu-execution-idle.github.io/hotnets26-poster/ (see ../projects.json).
+// Published at https://gpu-execution-idle.github.io/hotnets26-notebook/ (see ../projects.json).
 // Override with BASE_PATH=/other/ to host elsewhere.
-const base = process.env.BASE_PATH ?? '/hotnets26-poster/';
+const base = process.env.BASE_PATH ?? '/hotnets26-notebook/';
 
 // Static hosts serve /poster/ only if a file exists there: give it its own copy of the app shell.
 const posterRoute = (): Plugin => ({

@@ -5,7 +5,7 @@
   },
   "projects": [
     {
-      "path": "hotnets26-poster",
+      "path": "hotnets26-notebook",
       "title": "Notebook",
       "source": "hotnets-posters/dist"
     },
@@ -19,5 +19,8 @@
       "title": "Dataset",
       "status": "coming soon"
     }
-  ]
+  ],
+  "redirects": {
+    "hotnets26-poster": "hotnets26-notebook"
+  }
 }

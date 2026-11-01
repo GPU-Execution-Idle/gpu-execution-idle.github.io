@@ -7,9 +7,11 @@ own path.
 | URL | Content | Source |
 |---|---|---|
 | `/` | Landing page (generated) | `site/` + `projects.json` |
-| `/hotnets26-poster/` | HotNets 2026 notebook (the interactive poster, listed as "Notebook" on the landing page), and the paper poster at `/poster/` | `hotnets-posters/` (built to `dist/`) |
+| `/hotnets26-notebook/` | HotNets 2026 notebook (the interactive poster, listed as "Notebook" on the landing page), and the paper poster at `/poster/` | `hotnets-posters/` (built to `dist/`) |
 | `/hotnets26-demo-video/` | Two-minute demo video | `hotnets26-demo-video/` |
 | `/datasets/` | Measurement data (coming soon) | — |
+
+Moved paths keep working: `/hotnets26-poster/…` (the notebook's old address, used by earlier QR codes) redirects to the same page under `/hotnets26-notebook/`, keeping `/poster/`, the query and `#c2-q1`-style links. Redirects are listed under `"redirects"` in `projects.json` and handled by the generated 404 page.
 
 ```
 projects.json          ← registry: URL path → source folder (one entry per project)
@@ -18,7 +20,7 @@ site/build.py          ← assembles _site/ from projects.json; landing + 404 te
 hotnets-artifact/      ← interactive demo (see its README)
 hotnets-posters/       ← HotNets posters, React + Vite (see its README; build before site/build.py)
 hotnets26-demo-video/  ← the published video page, MP4 and poster
-qr/                    ← QR code to /hotnets26-poster/, the interactive poster (SVG + PNG; not published as a page)
+qr/                    ← QR code to /hotnets26-notebook/, the notebook (SVG + PNG; not published as a page)
 ```
 
 ## Preview locally
@@ -26,7 +28,7 @@ qr/                    ← QR code to /hotnets26-poster/, the interactive poster
 ```bash
 (cd hotnets-posters && deno install && deno task build)
 python3 site/build.py && python3 -m http.server -d _site 8000
-# http://localhost:8000/  ·  /hotnets26-poster/  ·  /hotnets26-demo-video/
+# http://localhost:8000/  ·  /hotnets26-notebook/  ·  /hotnets26-demo-video/
 ```
 
 ## Deploy (once)

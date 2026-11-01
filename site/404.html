@@ -5,14 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Not found</title>
   <script>
-    // GitHub Pages serves this page for every missing path on the site. Send visitors to
-    // the project the path belongs to (keeping any #route), or to the landing page.
-    var projects = {{project_paths}};
+    // GitHub Pages serves this page for every missing path on the site. A moved project
+    // (projects.json "redirects") forwards to its new path, keeping the rest of the URL, the
+    // query and the #route, so old links and printed QR codes keep working. Otherwise send
+    // visitors to the project the path belongs to (keeping any #route), or to the landing page.
+    var projects = {{project_paths}}, moved = {{redirects}};
+    var known = function (p) { return projects.indexOf(p) >= 0 || moved.hasOwnProperty(p); };
     var parts = location.pathname.split('/').filter(Boolean);
-    var site = parts.length && /\.github\.io$/.test(location.hostname) && projects.indexOf(parts[0]) < 0 && projects.indexOf(parts[1]) >= 0
+    var site = parts.length && /\.github\.io$/.test(location.hostname) && !known(parts[0]) && known(parts[1])
       ? '/' + parts.shift() + '/' : '/';   // also works when the site itself lives under a repo path
-    var project = projects.indexOf(parts[0]) >= 0 ? parts[0] + '/' : '';
-    location.replace(site + project + location.hash);
+    if (moved.hasOwnProperty(parts[0])) {
+      var rest = parts.slice(1).join('/');
+      location.replace(site + moved[parts[0]] + '/' + (rest ? rest + (location.pathname.slice(-1) === '/' ? '/' : '') : '') + location.search + location.hash);
+    } else {
+      var project = projects.indexOf(parts[0]) >= 0 ? parts[0] + '/' : '';
+      location.replace(site + project + location.hash);
+    }
   </script>
 </head>
 <body><p><a href="/">Go to the start page</a></p></body>

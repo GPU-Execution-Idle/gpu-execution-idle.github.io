@@ -6,6 +6,7 @@
 Each project in projects.json is published at /<path>/ by copying its `source` folder.
 A project with "status" and no source is listed on the landing page but not built yet.
 The landing page (/) and the 404 page are generated from the templates next to this file.
+"redirects" maps old project paths to new ones; the 404 page forwards them, keeping the rest of the URL.
 """
 import html
 import json
@@ -39,7 +40,8 @@ def main():
         arrow = '<span class="go" aria-hidden="true">→</span>' if ready else ""
         cards.append(f'<{tag} class="card"{href}><h2>{html.escape(p["title"])}{status}</h2>{desc}{arrow}</{tag}>')
     fill = {"{{title}}": html.escape(cfg["site"]["title"]), "{{tagline}}": html.escape(cfg["site"]["tagline"]),
-            "{{projects}}": "\n      ".join(cards), "{{project_paths}}": json.dumps(built)}
+            "{{projects}}": "\n      ".join(cards), "{{project_paths}}": json.dumps(built),
+            "{{redirects}}": json.dumps(cfg.get("redirects", {}))}
     for name in ("index.html", "404.html"):
         text = (HERE / name).read_text()
         for k, v in fill.items():
