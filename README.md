@@ -7,12 +7,12 @@ own path.
 | URL | Content | Source |
 |---|---|---|
 | `/` | Landing page (generated) | `site/` + `projects.json` |
-| `/hotnets26-notebook/` | HotNets 2026 notebook (the interactive poster, listed as "Notebook" on the landing page), and the paper poster at `/poster/` | `hotnets-posters/` (built to `dist/`) |
+| `/hotnets26-notebook/` | HotNets 2026 notebook (the interactive poster, listed as "Notebook" on the landing page). The paper poster is built but not published (`"exclude"` in `projects.json`); `/hotnets26-notebook/poster/` forwards to the notebook | `hotnets-posters/` (built to `dist/`) |
 | `/hotnets26-video/` | Two-minute demo video | `hotnets26-demo-video/` |
 | `/hotnets26-game/` | *Wake the GPU!*, a one-button game on a real serving trace | `hotnets-game/web/` |
 | `/datasets/` | Measurement data (coming soon) | — |
 
-Moved paths keep working: `/hotnets26-poster/…` (the notebook's old address, used by earlier QR codes) redirects to the same page under `/hotnets26-notebook/`, keeping `/poster/`, the query and `#c2-q1`-style links; `/hotnets26-demo-video/` (the video's old address) redirects to `/hotnets26-video/`. Redirects are listed under `"redirects"` in `projects.json` and handled by the generated 404 page.
+Moved paths keep working: `/hotnets26-poster/…` (the notebook's old address, used by earlier QR codes) redirects to the same page under `/hotnets26-notebook/`, keeping the query and `#c2-q1`-style links; `/hotnets26-demo-video/` (the video's old address) redirects to `/hotnets26-video/`. Redirects are listed under `"redirects"` in `projects.json` and handled by the generated 404 page.
 
 ```
 projects.json          ← registry: URL path → source folder (one entry per project)

@@ -7,7 +7,7 @@ Two coordinated posters built from one content file:
 | `/` | **Interactive web poster**, ready to present: a title banner and the argument's three parts in one column (The Hidden Energy Problem, The Challenge of GPU Power Management, The Case for Network-Aware Control), each a heading over its questions (1.1–3.2). Opening a question extends an answer card below it with a takeaway and, for most, one small interactive figure. |
 | `/poster/` | **Paper poster**: three headlines, a closing invitation and a QR code to the web poster. It is built in HTML/CSS for the browser, fullscreen and print. |
 
-Deployed at `https://gpu-execution-idle.github.io/hotnets26-notebook/`. The paper poster is at `…/hotnets26-notebook/poster/`, and a question deep link looks like `…/hotnets26-notebook/#c2-q1`.
+Deployed at `https://gpu-execution-idle.github.io/hotnets26-notebook/`; a question deep link looks like `…/hotnets26-notebook/#c2-q1`. The paper poster (`/poster/`) is local only: it is built into `dist/poster/` for previews and `deno task pdf`, but left out of the published site (`"exclude": ["poster"]` in `../projects.json`), and its old address forwards to the notebook.
 
 This project is separate from the demo (`../hotnets-artifact`), the video (`../hotnets-video`) and the paper.
 
@@ -73,7 +73,7 @@ The numbers live in `src/content/data.ts`, with a comment on each block.
 
 ## Deployment
 
-The repository's GitHub Pages workflow (`.github/workflows/pages.yml`) runs `deno install && deno task build` here. `site/build.py` then copies `dist/` to `/hotnets26-notebook/`, as listed in `../projects.json`. The build writes `dist/poster/index.html`, so a direct link to `/poster/` works on any static host. Question deep links use the URL hash.
+The repository's GitHub Pages workflow (`.github/workflows/pages.yml`) runs `deno install && deno task build` here. `site/build.py` then copies `dist/` to `/hotnets26-notebook/`, as listed in `../projects.json`. The build writes `dist/poster/index.html` for local use; the site build drops it (`"exclude"` in `../projects.json`). Question deep links use the URL hash.
 
 To host elsewhere, build with `BASE_PATH=/your/path/` and set `VITE_POSTER_URL` to the new public URL.
 

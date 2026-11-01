@@ -5,6 +5,7 @@
 
 Each project in projects.json is published at /<path>/ by copying its `source` folder.
 A project with "status" and no source is listed on the landing page but not built yet.
+"exclude" lists paths inside a project's source that are not published (e.g. local-only pages).
 The landing page (/) and the 404 page are generated from the templates next to this file.
 "redirects" maps old project paths to new ones; the 404 page forwards them, keeping the rest of the URL.
 """
@@ -32,6 +33,10 @@ def main():
             src = ROOT / p["source"]
             assert (src / "index.html").exists(), f"{p['source']} has no index.html"
             shutil.copytree(src, OUT / path, ignore=shutil.ignore_patterns(".DS_Store", "404.html"))
+            for rel in p.get("exclude", []):  # paths inside the source that are built but not published
+                target = (OUT / path / rel).resolve()
+                assert target.is_relative_to((OUT / path).resolve()) and target.exists(), f"bad exclude {rel!r} in {path}"
+                shutil.rmtree(target) if target.is_dir() else target.unlink()
             built.append(path)
         tag = "a" if ready else "div"
         href = f' href="{path}/"' if ready else ""

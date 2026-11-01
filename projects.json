@@ -7,7 +7,8 @@
     {
       "path": "hotnets26-notebook",
       "title": "Notebook",
-      "source": "hotnets-posters/dist"
+      "source": "hotnets-posters/dist",
+      "exclude": ["poster"]
     },
     {
       "path": "hotnets26-video",
