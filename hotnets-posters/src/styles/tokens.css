@@ -1,4 +1,4 @@
-/* Shared design tokens for both posters: warm paper, near-black ink, one violet accent. */
+/* Shared design tokens for both posters: warm paper, near-black ink, greys, one violet accent. */
 :root {
   --paper: #f3f0e8;
   --paper-2: #ebe7dc;
@@ -9,6 +9,8 @@
   --rule: #d6d0c3;
   --accent: #5a3fd6;
   --accent-soft: #e6e0fb;
+  --grey: #bdb7c6;      /* figure bars that are context (true idle, savings) */
+  --track: #e9e5dd;     /* bar tracks and neutral bars */
   --signal: #0f8f8a;
   --good: #1d7f4e;
   --bad: #b4322b;

@@ -112,15 +112,16 @@
 .fig .head { font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted); }
 .fig .small { font-size: 10.5px; fill: var(--muted); }
 .fig .in { fill: var(--ink); font-size: 11px; font-weight: 650; }
-.fig .in.light { fill: #fff; }
-.fig .good-t { fill: var(--good); }
-.fig .bad-t { fill: var(--bad); }
+.fig .in.light { fill: var(--ink-2); } /* text on a neutral bar */
+/* Figure colors match the paper poster: greys for context and savings, the accent for what matters. */
+.fig .good-t { fill: var(--ink-2); }
+.fig .bad-t { fill: var(--accent); }
 .fig .axis { stroke: var(--ink-2); stroke-width: 1; }
 .fig .bar { stroke: none; }
-.fig .bar.true-idle { fill: #3aa76d; }
+.fig .bar.true-idle { fill: var(--grey); }
 .fig .bar.agent { fill: var(--signal); }
-.fig .bar.good { fill: #3aa76d; }
-.fig .bar.bad { fill: #d0574f; }
+.fig .bar.good { fill: var(--grey); }
+.fig .bar.bad { fill: var(--accent); }
 .fig .bar.ink { fill: var(--ink); }
 .fig .sized { transition: width .45s cubic-bezier(.2, .7, .2, 1); }
 .fig .grow { transform-box: fill-box; transform-origin: bottom; transform: scaleY(0); opacity: 0; transition: transform .45s cubic-bezier(.2, .7, .2, 1), opacity .2s; }
@@ -155,7 +156,7 @@
 .fig .bracket { stroke: var(--muted); stroke-width: 1; }
 .fig .track { fill: var(--paper-2); }
 .fig .bar.exec { fill: var(--accent); }
-.fig .bar.exec-soft { fill: #c3b8f5; }
+.fig .bar.exec-soft { fill: color-mix(in srgb, var(--accent) 28%, var(--plate)); }
 .fig .exec-t { fill: var(--accent); }
 .fig .grid { stroke: var(--rule); stroke-width: 1; }
 .fig .ref { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
@@ -166,14 +167,14 @@
 .fig .browse-t { fill: var(--accent); font-weight: 650; }
 .fig .swe-t { fill: var(--ink-2); font-weight: 650; }
 .fig .pt.swe { fill: var(--ink-2); }
-.fig .bar.infer { fill: #d99a0b; }
+.fig .bar.infer { fill: var(--track); }
 .fig .bar.tool { fill: #8c9196; }
 .fig .work-line { stroke: var(--ink); stroke-width: 1.6; }
 .fig .axis.faint { stroke: var(--rule); }
 .fig .lead-row .row-title { transition: opacity .3s; }
-.fig .lead-row.ready .row-title { fill: #2f62d0; }
-.fig .lead-row.sm { --c: #2a9d8f; }
-.fig .lead-row.smMem { --c: #7b5cd6; }
+.fig .lead-row.ready .row-title { fill: var(--ink); }
+.fig .lead-row.sm { --c: var(--accent); }
+.fig .lead-row.smMem { --c: var(--accent); }
 .fig .lead-row.sm .row-title, .fig .lead-row.smMem .row-title, .fig .lead-t { fill: var(--c); }
 .fig .lead { stroke: var(--c); stroke-width: 3; }
 .fig .lead-head, .fig .lead-dot { fill: var(--c); }
@@ -182,18 +183,18 @@
 .fig .lead-grow { transform-box: fill-box; transform-origin: right; animation: lead-grow .7s cubic-bezier(.2, .7, .2, 1); }
 @keyframes lead-grow { from { transform: scaleX(0); } }
 .fig .pt { stroke: #222; stroke-width: 1; cursor: pointer; transition: transform .15s; transform-box: fill-box; transform-origin: center; outline: none; }
-.fig .pt.sm, .fig .bar.sm-f { fill: #2a9d8f; }
-.fig .pt.smMem, .fig .bar.smMem-f { fill: #7b5cd6; }
+.fig .pt.sm, .fig .bar.sm-f { fill: #9a94a6; }
+.fig .pt.smMem, .fig .bar.smMem-f { fill: var(--accent); }
 .fig .pt.neutral { fill: #c9c6cf; cursor: default; }
 .fig .pt.hot, .fig .pt:focus-visible { transform: scale(1.35); stroke-width: 2; }
 .fig .trail { fill: none; stroke-width: 1.4; stroke-dasharray: 4 3; opacity: .7; }
-.fig .trail.sm { stroke: #2a9d8f; }
-.fig .trail.smMem { stroke: #7b5cd6; }
+.fig .trail.sm { stroke: #9a94a6; }
+.fig .trail.smMem { stroke: var(--accent); }
 .fig .star { fill: var(--ink); }
 .fig .tip rect { fill: var(--ink); }
 .fig .tip text { fill: var(--paper); }
-.fig .tip .good-t { fill: #7ee2a8; }
-.fig .tip .bad-t { fill: #ff9c94; }
+.fig .tip .good-t { fill: #cfc9d8; }
+.fig .tip .bad-t { fill: #a48bff; }
 .fig .both { fill: var(--ink); font-weight: 650; }
 
 /* ---------- Phones ---------- */
