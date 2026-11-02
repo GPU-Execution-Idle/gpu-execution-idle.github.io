@@ -48,9 +48,9 @@ function PairBars({ rows, saveMax, costMax, label, bh, step }: { rows: PairRow[]
   );
 }
 
-// 1.1: true idle vs. execution-idle power; the label is how much more execution-idle draws.
+// 1.1: true idle vs. execution-idle power (W) per GPU, each bar labeled with its reading; above them, how much more execution-idle draws.
 function IdlePower() {
-  const W = FW, base = 122, top = 18, max = 200, y = (v: number) => base - (v / max) * (base - top), slot = W / IDLE_POWER.length;
+  const W = FW, base = 122, top = 34, max = 200, y = (v: number) => base - (v / max) * (base - top), slot = W / IDLE_POWER.length;
   return (
     <>
       <Svg w={W} h={142} label={IDLE_POWER.map((g) => `${g.gpu}: ${g.trueIdle} W true idle, ${g.execIdle} W execution-idle`).join('; ')}>
@@ -61,13 +61,15 @@ function IdlePower() {
             <g key={g.gpu}>
               <rect className="f-grey" x={cx - 22} y={y(g.trueIdle)} width="20" height={base - y(g.trueIdle)} rx="2" />
               <rect className="f-acc" x={cx + 2} y={y(g.execIdle)} width="20" height={base - y(g.execIdle)} rx="2" />
-              <text className="acc" x={cx + 12} y={y(g.execIdle) - 5} textAnchor="middle">+{g.execIdle - g.trueIdle} W</text>
+              <text x={cx - 12} y={y(g.trueIdle) - 5} textAnchor="middle">{g.trueIdle}</text>
+              <text x={cx + 12} y={y(g.execIdle) - 5} textAnchor="middle">{g.execIdle}</text>
+              <text className="acc" x={cx + 12} y={y(g.execIdle) - 19} textAnchor="middle">+{g.execIdle - g.trueIdle}</text>
               <text x={cx} y={base + 16} textAnchor="middle">{g.gpu}</text>
             </g>
           );
         })}
       </Svg>
-      <Legend items={[['f-grey', 'true idle'], ['f-acc', 'execution-idle']]} />
+      <Legend items={[['f-grey', 'true idle (W)'], ['f-acc', 'execution-idle (W)'], ['', '+ difference (W)']]} />
     </>
   );
 }
@@ -127,17 +129,18 @@ function Reactive() {
 }
 
 // Rows of "title, then a bar that starts at a line": shared by 2.2 and 3.1, so the two read alike.
-// Row step and bar height are per figure, so each fills its card. Guides are labeled on top.
-type LaneRow = { title: string; from?: number; fromSoft?: boolean; wake?: number; note?: string; noteAcc?: boolean; noteAt?: number };
-type Guide = { x: number; label: string; dash?: boolean };
+// Row step and bar height are per figure, so each fills its card. Guides are labeled on top, or under the line (`below`).
+type LaneRow = { title: string; from?: number; fromSoft?: boolean; wake?: number; note?: string; noteAcc?: boolean; barLabel?: string; lead?: string };
+type Guide = { x: number; label: string; dash?: boolean; below?: boolean };
 function Lanes({ rows, xWork, guides, label, bar, step, bh }: { rows: LaneRow[]; xWork: number; guides: Guide[]; label: string; bar: number; step: number; bh: number }) {
   const W = FW, top = 34, gap = 8, bottom = top + step * (rows.length - 1) + gap + bh;
+  const ext = 26, under = guides.some((g) => g.below) ? ext + 20 : 0; // a labeled-below line runs past the last bar
   return (
-    <Svg w={W} h={bottom + 2} label={label}>
+    <Svg w={W} h={bottom + 2 + under} label={label}>
       {guides.map((g) => (
         <g key={g.label}>
-          <line className={`guide${g.dash ? ' dash' : ''}`} x1={g.x} x2={g.x} y1="16" y2={bottom} />
-          <text className="mute" x={g.x} y="10" textAnchor="middle">{g.label}</text>
+          <line className={`guide${g.dash ? ' dash' : ''}`} x1={g.x} x2={g.x} y1="16" y2={g.below ? bottom + ext : bottom} />
+          <text className={g.below ? 'ink' : 'mute'} x={g.x} y={g.below ? bottom + ext + 15 : 10} textAnchor="middle">{g.label}</text>
         </g>
       ))}
       {rows.map((r, i) => {
@@ -145,18 +148,19 @@ function Lanes({ rows, xWork, guides, label, bar, step, bh }: { rows: LaneRow[];
         return (
           <g key={r.title}>
             <text className="ink" x="0" y={y}>{r.title}</text>
-            {r.note ? <text className={r.noteAcc ? 'acc' : 'mute'} x={r.noteAt ?? W} y={y} textAnchor="end">{r.note}</text> : null}
+            {r.note ? <text className={r.noteAcc ? 'acc' : 'mute'} x={W} y={y} textAnchor="end">{r.note}</text> : null}
             <line className="lane" x1="0" x2={W} y1={ay} y2={ay} />
             {r.from !== undefined ? (
               <g className={r.fromSoft ? 'soft' : ''}>
                 <line className="lead" x1={r.from} x2={xWork - 7} y1={ay} y2={ay} />
                 <path className="lead-mark" d={`M${xWork - 8},${ay - 5} L${xWork},${ay} L${xWork - 8},${ay + 5} Z`} />
                 <circle className="lead-mark" cx={r.from} cy={ay} r="4.5" />
+                {r.lead ? <text className="acc" x={(r.from + xWork) / 2} y={by + bh + 14} textAnchor="middle">{r.lead}</text> : null}
               </g>
             ) : null}
             {r.wake ? <><rect className="f-grey" x={xWork} y={by} width={r.wake} height={bh} rx="3" /><text className="ink" x={xWork + r.wake / 2} y={ty} textAnchor="middle">wake</text></> : null}
             <rect className="f-track" x={x0} y={by} width={bar} height={bh} rx="3" />
-            <text x={x0 + bar / 2} y={ty} textAnchor="middle">inference</text>
+            <text x={x0 + bar / 2} y={ty} textAnchor="middle">{r.barLabel ?? 'inference'}</text>
           </g>
         );
       })}
@@ -168,13 +172,13 @@ function Lanes({ rows, xWork, guides, label, bar, step, bh }: { rows: LaneRow[];
 function WakeLead() {
   const xWork = 250, T0 = 0.36, x = (ms: number) => ((T0 - ms / 1000) / T0) * xWork;
   return (
-    <Lanes xWork={xWork} bar={FW - xWork} step={70} bh={24}
+    <Lanes xWork={xWork} bar={FW - xWork} step={72} bh={20}
       label={`Waking ${WAKE_LEAD_MS.sm} ms (SM) or ${WAKE_LEAD_MS.smMem} ms (SM + memory) before work starts gives the same performance as Default.`}
-      guides={[{ x: xWork, label: 'work starts' }]}
+      guides={[{ x: xWork, label: 'work starts on an L40S GPU', below: true }]}
       rows={[
-        { title: 'Default' },
-        { title: 'SM at minimum', from: x(WAKE_LEAD_MS.sm), note: `${WAKE_LEAD_MS.sm} ms earlier`, noteAcc: true, noteAt: xWork - 8 },
-        { title: 'SM + memory at minimum', from: x(WAKE_LEAD_MS.smMem), note: `${WAKE_LEAD_MS.smMem} ms earlier`, noteAcc: true, noteAt: xWork - 8 },
+        { title: 'Default (no scaling)' },
+        { title: 'SM at minimum', from: x(WAKE_LEAD_MS.sm), lead: `wake ${WAKE_LEAD_MS.sm} ms earlier`, barLabel: 'same as Default' },
+        { title: 'SM + memory at minimum', from: x(WAKE_LEAD_MS.smMem), lead: `wake ${WAKE_LEAD_MS.smMem} ms earlier`, barLabel: 'same as Default' },
       ]} />
   );
 }
@@ -195,7 +199,8 @@ function NetSignals() {
   );
 }
 
-// 3.2: energy saved vs. p95 latency added, normalized to Default, for each approach and setting.
+// 3.2: energy saved vs. p95 latency added, normalized to Default, for each approach and setting,
+// on the serving trace named in data.ts (TRADEOFF).
 // Lengths use the points read from the paper figure; labels use the paper's stated changes.
 function Tradeoff() {
   const NAMES = { reactive: 'Reactive', netwake: 'Net-wake', margin: '+3.5 s margin' } as const;
@@ -203,12 +208,13 @@ function Tradeoff() {
   const costMax = Math.max(...TRADEOFF.map((p) => (p.p95 - 1) * 100));
   return (
     <>
+      <p className="pnote">Serving the Azure Code trace with Qwen3-14B</p>
       <div className="psubs">
         {settings.map(([s, title]) => {
           const pts = TRADEOFF.filter((p) => p.setting === s);
           return (
             <Sub key={s} title={title}>
-              <PairBars saveMax={45} costMax={costMax} bh={17} step={66}
+              <PairBars saveMax={45} costMax={costMax} bh={16} step={54}
                 label={`${title}: ${pts.map((p) => `${NAMES[p.kind]} ${p.energyTxt} energy, ${p.p95Txt} p95 latency`).join('; ')}`}
                 rows={pts.map((p) => ({
                   name: NAMES[p.kind], strong: p.kind === 'netwake',

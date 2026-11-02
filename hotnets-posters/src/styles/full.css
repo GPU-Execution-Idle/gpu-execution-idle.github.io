@@ -99,7 +99,12 @@
 .plegend i { width: calc(var(--u) * 1); height: calc(var(--u) * 1); border-radius: calc(var(--u) * .2); }
 .plegend .f-grey { background: var(--grey); }
 .plegend .f-acc { background: var(--accent); }
+.plegend i:not([class]), .plegend i[class=''] { display: none; } /* a text-only entry */
+.plegend span:has(> i[class='']) { color: var(--accent); }
 .plegend .f-soft { background: color-mix(in srgb, var(--accent) 28%, var(--plate)); }
+
+/* A figure's context line (e.g. which trace), in the regular style. */
+.pnote { margin: 0; font-size: var(--c); color: var(--ink-2); }
 
 /* Subfigures: each with its own caption, side by side (or stacked). */
 .psubs { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 1.6); }
