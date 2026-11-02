@@ -34,7 +34,7 @@ export const CLAIMS: Claim[] = [
     id: 'c1', n: 1, part: 'The Hidden Energy Problem', text: 'We’ve Uncovered a Hidden Cost of GPU Idleness.',
     questions: [
       { id: 'q1', q: 'What is the hidden energy problem with GPUs?',
-        takeaway: 'GPUs can waste energy even when doing no useful work. When a program remains loaded but the GPU is not computing—a state we call execution-idle—the GPU can draw 30–\u206070\u00a0W more than when truly idle.',
+        takeaway: 'GPUs can waste energy even when doing no useful work. When a program remains loaded but the GPU has zero activity—a state we call execution-idle—it can draw 30–\u206070\u00a0W more than when truly idle.',
         figure: 'idle-power',
         poster: { takeaway: 'When a program remains loaded but the GPU has zero activity—a state we call execution-idle—it can draw 30–\u206070\u00a0W more than when truly idle.' } },
       { id: 'q2', q: 'How common is execution-idle in real workloads?',

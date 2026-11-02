@@ -34,17 +34,18 @@ const W = 400;
 const SETTINGS = [['sm', 'SM at minimum'], ['smMem', 'SM + memory at minimum']] as const;
 const SETTING_NAME = Object.fromEntries(SETTINGS) as Record<'sm' | 'smMem', string>;
 
-// 1.1: true idle vs. execution-idle power on data-center and workstation GPUs; the execution-idle bars appear on demand.
+// 1.1: true idle vs. execution-idle power on data-center and workstation GPUs, each bar labeled with its reading (W);
+// the execution-idle bars, with how much more they draw, appear on demand.
 function IdlePower() {
   const [shown, setShown] = useState<'idle' | 'exec'>('exec');
-  const H = 172, base = 150, top = 30, max = 200, y = (v: number) => base - (v / max) * (base - top);
+  const H = 186, base = 164, top = 44, max = 200, y = (v: number) => base - (v / max) * (base - top);
   const slot = (W - 8) / IDLE_POWER.length, x0 = 4;
   return (
     <>
       <Seg label="Program state" value={shown} onChange={setShown}
         options={[['idle', 'True idle: no program'], ['exec', 'Execution-idle: program loaded, no work']] as const} />
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={IDLE_POWER.map((g) => `${g.gpu}: ${g.trueIdle} W true idle, ${g.execIdle} W execution-idle`).join('; ')}>
-        <Legend x={x0} y={12} items={[['true-idle', 'true idle (W)'], ['exec', 'execution-idle (+W above true idle)']]} />
+        <Legend x={x0} y={12} items={[['true-idle', 'true idle (W)'], ['exec', 'execution-idle (W), +difference']]} />
         <line className="axis" x1={x0} x2={W - 4} y1={base} y2={base} />
         {IDLE_POWER.map((g, i) => {
           const cx = x0 + slot * (i + .5);
@@ -54,7 +55,8 @@ function IdlePower() {
               <text className="val tiny" x={cx - 9} y={y(g.trueIdle) - 4} textAnchor="middle">{g.trueIdle}</text>
               <g className={`grow${shown === 'exec' ? ' on' : ''}`}>
                 <rect className="bar exec" x={cx + 1} y={y(g.execIdle)} width="16" height={base - y(g.execIdle)} rx="2" />
-                <text className="val tiny strong" x={cx + 9} y={y(g.execIdle) - 4} textAnchor="middle">+{g.execIdle - g.trueIdle}</text>
+                <text className="val tiny" x={cx + 9} y={y(g.execIdle) - 4} textAnchor="middle">{g.execIdle}</text>
+                <text className="val tiny strong exec-t" x={cx + 9} y={y(g.execIdle) - 16} textAnchor="middle">+{g.execIdle - g.trueIdle}</text>
               </g>
               <text className="tick" x={cx} y={base + 17} textAnchor="middle">{g.gpu}</text>
             </g>
