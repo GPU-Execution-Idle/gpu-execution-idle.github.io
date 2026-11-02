@@ -1,0 +1,111 @@
+/* Full paper poster (36×48 in). Toolbar, stage and sheet come from paper.css; here --u is 1% of the
+   sheet's width (0.36 in). Below the title and the section headings there are two type sizes:
+   --q for questions (and the authors), --c for everything else, figure labels included (about 28 pt).
+   Color: ink and greys, plus the accent for what matters. */
+
+.sheet.fp > * { --u: 1cqw; --q: calc(var(--u) * 1.5); --c: calc(var(--u) * 1.1); }
+.paper-tools > a.alt { margin-right: 0; font-weight: 500; color: var(--ink-2); }
+
+/* ---------- Title band ---------- */
+.fp-head {
+  /* Inset like the cards: nothing prints within 0.5 in of the sheet's edge (here about 0.9 in at the top, 1.8 in at the sides). */
+  margin: calc(var(--u) * 2.4) calc(var(--u) * 5) 0; padding: calc(var(--u) * 2.2) calc(var(--u) * 2.4) calc(var(--u) * 1.2);
+  border-radius: calc(var(--u) * 1.1);
+  display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: calc(var(--u) * 2);
+  background: var(--ink); color: var(--paper);
+}
+.fp-venue { margin: 0 0 calc(var(--u) * 1); font-size: var(--c); letter-spacing: .26em; color: #8f889c; }
+.fp-title {
+  margin: 0;
+  font-family: var(--f-display); font-weight: 820;
+  font-size: calc(var(--u) * 4.9); line-height: 1; letter-spacing: -.045em; white-space: nowrap;
+}
+.fp-title em { font-style: normal; color: #a48bff; }
+.fp-authors { margin: calc(var(--u) * 1.3) 0 0; font-weight: 600; font-size: calc(var(--u) * 1.3); line-height: 1.3; letter-spacing: -.01em; }
+.fp-affil { margin: calc(var(--u) * .3) 0 0; font-size: var(--c); color: #8f889c; }
+
+.fp-qr { margin: 0; display: grid; justify-items: center; gap: calc(var(--u) * .7); }
+.fp-qr-code { width: calc(var(--u) * 8.5); height: auto; border-radius: calc(var(--u) * .4); }
+.fp-qr figcaption { display: grid; justify-items: center; max-width: calc(var(--u) * 8.5); text-align: center; font-size: var(--c); line-height: 1.25; color: #cfc9d8; }
+.fp-qr .label { font-size: var(--c); letter-spacing: .24em; color: #a48bff; }
+
+.fp-trace { grid-column: 1 / -1; width: 100%; height: calc(var(--u) * 2); margin-top: calc(var(--u) * 1); }
+.fp-trace :is(.trace-run, .trace-wait, .trace-wake) { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.fp-trace :is(.trace-run, .trace-wait) { stroke: #6f6880; stroke-width: calc(var(--u) * .2); }
+.fp-trace .trace-wake { stroke: #a48bff; stroke-width: calc(var(--u) * .32); }
+.fp-trace .trace-floor { stroke: #4a4458; stroke-width: calc(var(--u) * .12); stroke-dasharray: calc(var(--u) * .5) calc(var(--u) * .8); vector-effect: non-scaling-stroke; }
+.fp-trace .trace-dot { fill: #a48bff; }
+
+/* ---------- Three parts as rows, each a heading over two question cards ---------- */
+.fp-parts {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; gap: calc(var(--u) * 2.2);
+  padding: calc(var(--u) * 2.4) calc(var(--u) * 5) calc(var(--u) * 2.6);
+}
+/* The three rows are the same height; cards in a row share a height. */
+.fp-part {
+  flex: 1 1 0;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr; gap: calc(var(--u) * 1.2) calc(var(--u) * 2.6);
+}
+.fp-part-head {
+  grid-column: 1 / -1; margin: 0;
+  display: flex; align-items: baseline; gap: calc(var(--u) * 1.3);
+  font-family: var(--f-display); font-weight: 800; font-size: calc(var(--u) * 2.3); line-height: 1; letter-spacing: -.03em;
+}
+.fp-part-no { color: var(--muted); }
+
+.fp-card {
+  display: flex; flex-direction: column;
+  padding: calc(var(--u) * 1.4) calc(var(--u) * 1.5) calc(var(--u) * 1.4);
+  background: var(--plate); border-radius: calc(var(--u) * .9);
+}
+.fp-q {
+  margin: 0;
+  display: flex; gap: calc(var(--u) * .9); align-items: baseline;
+  font-family: var(--f-display); font-weight: 720; font-size: var(--q); line-height: 1.15; letter-spacing: -.02em;
+}
+.fp-q-no { color: var(--muted); }
+.fp-text { margin-top: calc(var(--u) * 1.6); }
+.fp .takeaway { margin: 0; max-width: none; font-size: var(--c); font-weight: 450; line-height: 1.4; color: var(--ink-2); }
+.fp .takeaway + .takeaway { margin-top: .35em; }
+.fp .takeaway strong { font-weight: 700; color: var(--ink); }
+.fp .takeaway-list { padding-left: 1.1em; }
+.fp .takeaway-list li::marker { color: var(--muted); }
+
+/* The figure sits centered in the space under the question (and takeaway). */
+.fp-fig { margin-block: auto; padding-top: calc(var(--u) * 1.4); }
+.pfig-wrap { display: grid; gap: calc(var(--u) * 1.8); }
+
+/* ---------- Poster figures: 1 viewBox unit = 0.1u, labels 11 units, so they print at --c ---------- */
+.pfig { display: block; width: calc(var(--u) * var(--vbw) / 10); max-width: 100%; height: auto; overflow: visible; }
+.pfig text { font-family: var(--f-text); font-size: 11px; font-weight: 450; fill: var(--ink-2); }
+.pfig .ink { fill: var(--ink); }
+.pfig .mute { fill: var(--muted); }
+.pfig .acc { fill: var(--accent); }
+.pfig .f-grey { fill: var(--grey); }
+.pfig .f-acc { fill: var(--accent); }
+.pfig .f-soft { fill: color-mix(in srgb, var(--accent) 28%, var(--plate)); }
+.pfig .f-track { fill: var(--track); }
+.pfig .axis { stroke: var(--ink-2); stroke-width: .8; }
+.pfig .lane { stroke: var(--track); stroke-width: 1; }
+.pfig .guide { stroke: var(--ink); stroke-width: 1.2; }
+.pfig .guide.dash { stroke: var(--muted); stroke-dasharray: 3 3; }
+.pfig .lead { stroke: var(--accent); stroke-width: 2.6; }
+.pfig .lead-mark { fill: var(--accent); }
+.pfig .soft { opacity: .5; }
+
+.plegend { margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: calc(var(--u) * .4) calc(var(--u) * 2); font-size: var(--c); color: var(--ink-2); }
+.plegend span { display: inline-flex; align-items: center; gap: calc(var(--u) * .6); }
+.plegend i { width: calc(var(--u) * 1); height: calc(var(--u) * 1); border-radius: calc(var(--u) * .2); }
+.plegend .f-grey { background: var(--grey); }
+.plegend .f-acc { background: var(--accent); }
+.plegend .f-soft { background: color-mix(in srgb, var(--accent) 28%, var(--plate)); }
+
+/* Subfigures: each with its own caption, side by side (or stacked). */
+.psubs { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 1.6); }
+.psubs.stack { grid-template-columns: 1fr; gap: calc(var(--u) * 1.3); }
+.psub { margin: 0; display: grid; gap: calc(var(--u) * .7); align-content: start; }
+.psub figcaption { font-size: var(--c); font-weight: 650; color: var(--ink); padding-bottom: calc(var(--u) * .4); border-bottom: calc(var(--u) * .08) solid var(--track); }
+
+/* Print shows the end state of every animation. */
+.fp *, .fp *::before, .fp *::after { animation: none !important; transition: none !important; }

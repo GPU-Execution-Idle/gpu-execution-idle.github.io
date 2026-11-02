@@ -7,14 +7,16 @@ import { resolve } from 'node:path';
 // Override with BASE_PATH=/other/ to host elsewhere.
 const base = process.env.BASE_PATH ?? '/hotnets26-notebook/';
 
-// Static hosts serve /poster/ only if a file exists there: give it its own copy of the app shell.
+// Static hosts serve /poster/ and /poster/full/ only if a file exists there: give it its own copy of the app shell.
 const posterRoute = (): Plugin => ({
   name: 'poster-route',
   apply: 'build',
   closeBundle() {
     const dist = resolve(__dirname, 'dist');
-    mkdirSync(resolve(dist, 'poster'), { recursive: true });
-    copyFileSync(resolve(dist, 'index.html'), resolve(dist, 'poster/index.html'));
+    for (const route of ['poster', 'poster/full']) {
+      mkdirSync(resolve(dist, route), { recursive: true });
+      copyFileSync(resolve(dist, 'index.html'), resolve(dist, route, 'index.html'));
+    }
   },
 });
 

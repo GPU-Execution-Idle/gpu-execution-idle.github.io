@@ -1,8 +1,8 @@
 // Export the paper poster as print-ready PDFs (one per size) from the built site.
 //
-//   deno task build && deno task pdf          # writes pdf/poster-24x36.pdf and pdf/poster-36x48.pdf
+//   deno task build && deno task pdf   # writes pdf/poster-24x36.pdf, pdf/poster-36x48.pdf, pdf/poster-full-36x48.pdf
 //
-// Serves dist/ under its base path, opens /poster/?size=… in headless Chrome and prints with the
+// Serves dist/ under its base path, opens /poster/?size=… and /poster/full/ in headless Chrome and prints with the
 // page's own @page size (24×36 in or 36×48 in, no margins, backgrounds on). Set CHROME_PATH if
 // Chrome is not in the default macOS location.
 import { launch } from 'jsr:@astral/astral@0.5.6';
@@ -24,13 +24,17 @@ const origin = `http://localhost:${server.addr.port}`;
 await Deno.mkdir(OUT, { recursive: true });
 const browser = await launch({ path: CHROME, headless: true });
 try {
-  for (const size of ['24x36', '36x48']) {
-    const page = await browser.newPage(`${origin}${BASE}poster/?size=${size}`);
+  const jobs = [
+    ...['24x36', '36x48'].map((size) => [`poster/?size=${size}`, `poster-${size}.pdf`]),
+    ['poster/full/', 'poster-full-36x48.pdf'],
+  ];
+  for (const [route, file] of jobs) {
+    const page = await browser.newPage(`${origin}${BASE}${route}`);
     await page.waitForNetworkIdle();
     await page.evaluate('document.fonts.ready.then(() => true)');
     const pdf = await page.pdf({ printBackground: true, preferCSSPageSize: true });
-    await Deno.writeFile(`${OUT}/poster-${size}.pdf`, pdf);
-    console.log(`wrote pdf/poster-${size}.pdf`);
+    await Deno.writeFile(`${OUT}/${file}`, pdf);
+    console.log(`wrote pdf/${file}`);
     await page.close();
   }
 } finally {

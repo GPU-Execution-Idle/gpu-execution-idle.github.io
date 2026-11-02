@@ -21,7 +21,7 @@ function onRowKey(e: KeyboardEvent<HTMLButtonElement>) {
 const inline = (t: string) => t.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : part));
 
 // A takeaway paragraph: a bulleted list when every line starts with "- ", otherwise a paragraph.
-function Para({ text }: { text: string }) {
+export function Para({ text }: { text: string }) {
   const lines = text.split('\n');
   if (lines.every((l) => l.startsWith('- '))) {
     return <ul className="takeaway takeaway-list">{lines.map((l, i) => <li key={i}>{inline(l.slice(2))}</li>)}</ul>;

@@ -6,6 +6,7 @@ Two coordinated posters built from one content file:
 |---|---|
 | `/` | **Interactive web poster**, ready to present: a title banner and the argument's three parts in one column (The Hidden Energy Problem, The Challenge of GPU Power Management, The Case for Network-Aware Control), each a heading over its questions (1.1–3.2). Opening a question extends an answer card below it with a takeaway and, for most, one small interactive figure. |
 | `/poster/` | **Paper poster**: three headlines, a closing invitation and a QR code to the web poster. It is built in HTML/CSS for the browser, fullscreen and print. |
+| `/poster/full/` | **Full paper poster, 36×48 in**: title band with authors and a QR code to the game, then the three parts as rows, each with its two questions side by side (takeaway and figure). Local only, like `/poster/`. |
 
 Deployed at `https://gpu-execution-idle.github.io/hotnets26-notebook/`; a question deep link looks like `…/hotnets26-notebook/#c2-q1`. The paper poster (`/poster/`) is local only: it is built into `dist/poster/` for previews and `deno task pdf`, but left out of the published site (`"exclude": ["poster"]` in `../projects.json`), and its old address forwards to the notebook.
 
@@ -41,10 +42,12 @@ deno task preview      # serve dist/ at http://localhost:4173/hotnets26-notebook
 - **Print-ready PDFs from the command line:**
 
   ```bash
-  deno task build && deno task pdf   # → pdf/poster-24x36.pdf, pdf/poster-36x48.pdf
+  deno task build && deno task pdf   # → pdf/poster-24x36.pdf, pdf/poster-36x48.pdf, pdf/poster-full-36x48.pdf
   ```
 
   Each is one page at exactly 24×36 in or 36×48 in, with fonts embedded. Set `CHROME_PATH` if Chrome is not at the default macOS path.
+
+**Full poster:** cards in a row share a height, and each question fits on one line. Below the title and section headings there are two type sizes: one for questions, one for everything else, figure labels included (`--q` and `--c` in `full.css`). Its figures are in `src/components/PosterFigures.tsx`: drawn from the same `data.ts`, still (every choice at once, subfigures captioned separately), in greys plus the accent, at one scale so figure text prints at body size. A question's `poster` field in `claims.ts` replaces its takeaway (empty leaves only the figure) or figure on this poster only, and a claim's `posterPart` its heading. 3.1 uses a schematic (`net-signals`, not data) of when GPU-local control, a network observation and a network prediction start waking the GPU. The QR code points to `GAME_URL` in `src/content/config.ts` (`VITE_GAME_URL` overrides it).
 
 **QR code target:** the code is generated from `WEB_POSTER_URL` in `src/content/config.ts`. To change the target, build with `VITE_POSTER_URL=https://… deno task build`.
 
