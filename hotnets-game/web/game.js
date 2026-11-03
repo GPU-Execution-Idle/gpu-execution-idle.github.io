@@ -1,5 +1,6 @@
 import { DATA } from './data.js';
-import { JumpGame } from './jump-model.js';
+import { JumpGame, GOOD_SCREEN_S } from './jump-model.js';
+import * as sound from './audio.js';
 
 const $ = id => document.getElementById(id);
 const game = new JumpGame(DATA);
@@ -10,9 +11,13 @@ const C = {
   predict: '#6a4fc4', predictFill: 'rgba(106,79,196,.14)', burn: '#c43d32', late: '#b7791f', fall: '#868c96',
   you: '#2f62d0', youFill: 'rgba(47,98,208,.07)',
 };
-const LONG_BURN_S = 2.5;  // a premature wake is labeled only once it has burned energy this long (display seconds)
+const BONUS_S = 1.2;      // how long the "Perfect timing!" / "Good timing!" text plays after the wake (display seconds)
+const BONUS = { perfect: '⭐ Perfect timing!', good: '👍 Good timing!' };
+const bonusOf = a => (a?.perfect ? 'perfect' : a?.good ? 'good' : null);
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const STATE_COLOR = { idle: C.ink, ramp: C.ink, work: C.ink, burn: C.burn, late: C.late, fall: C.fall };
-const STATE_NOTE = { burn: 'Premature wake · burning energy', late: 'Woke too late · hurting latency', fall: 'Work done · back to low power' };
+// Outcome labels (one per request): too early, too late, or perfect / good timing (drawn as the bonus text).
+const STATE_NOTE = { burn: '🔥 Too early!', late: '⏰ Too late!' };
 const STATUS = {
   idle: 'GPU at low frequency.', ramp: 'GPU frequency is ramping up.', burn: 'Premature wake: GPU waiting at high frequency, burning energy.',
   late: 'Woke too late: work runs at reduced frequency, hurting latency.', work: 'GPU doing work.', fall: 'Work done: GPU returning to low power.',
@@ -29,7 +34,9 @@ function update() {
   text('round', `${game.index + 1} / ${game.wakes.length} requests from the ${DATA.trace}`);
   $('action').disabled = !(game.canJump || game.phase === 'between');
   text('action-label', game.phase === 'between' ? 'Press space to continue' : 'Press space to ramp up GPU frequency');
-  const status = game.phase === 'between' ? 'First request done. Paused. Press Space to continue.' : STATUS[game.state];
+  const lastHit = game.arrivals.at(-1), lastBonus = bonusOf(lastHit);
+  const bonus = lastBonus && game.visual - lastHit.t < BONUS_S ? `${BONUS[lastBonus].slice(2)} ` : '';
+  const status = game.phase === 'between' ? 'First request done. Paused. Press Space to continue.' : bonus + STATUS[game.state];
   text('accessible-status', status);
   $('scene').setAttribute('aria-label', `Network prediction, GPU work and GPU frequency over time. ${status}`);
   renderedPhase = game.phase;
@@ -41,13 +48,18 @@ function draw() {
   const axisFs = small ? 12 : 13, noteFs = small ? 10 : 11, left = small ? 96 : 136;
   // Three rows of about the same height: prediction, work, and frequency (the row the player controls).
   const rowP = [12, 96], rowW = [96, 180], rowF = [180, 300], top = rowP[0], bottom = rowF[1], H = bottom + 26;
-  const nowX = left + (W - left) * .32, pps = (W - nowX - 16) / 17;
+  // NOW sits a third of the way in on wide screens (17 s ahead visible); on phones in the middle with 12 s
+  // ahead, which keeps about the same pixels per second while showing more of the past.
+  const nowX = left + (W - left) * (small ? .5 : .32), pps = (W - nowX - 16) / (small ? 12 : 17);
   const high = rowF[0] + 32, low = bottom - 18, Y = h => low - (low - high) * h, X = t => nowX + (t - game.visual) * pps;
   const bracketY = (rowP[0] + rowP[1]) / 2, workH = 26, workY = (rowW[0] + rowW[1] - workH) / 2;
   const n = v => Number(v).toFixed(1);
   const txt = (x, y, s, attrs = '') => `<text x="${n(x)}" y="${n(y)}" ${attrs}>${s}</text>`;
   const rowLabel = `fill="${C.muted}" font-size="${axisFs}" font-weight="650"`;
-  const note = color => `fill="${color}" font-size="${noteFs}" font-weight="700"`;
+  // Notes get a white outline so they stay readable over lines and blocks.
+  const note = color => `fill="${color}" font-size="${noteFs}" font-weight="700" stroke="#fff" stroke-width="3" stroke-linejoin="round" paint-order="stroke"`;
+  // Keep a note inside the plot: shift it left when it would run past the right edge (phones).
+  const fit = (x, label) => Math.min(x, W - 8 - label.length * noteFs * .58);
 
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs>`;
   s += `<clipPath id="plot"><rect x="${left}" y="${top}" width="${W - left}" height="${bottom - top}" rx="10"/></clipPath>`;
@@ -80,7 +92,11 @@ function draw() {
     s += `<rect x="${n(a)}" y="${bracketY - 9}" width="${n(Math.max(2, b - a))}" height="18" rx="3" fill="${C.predictFill}"/>`;
     s += `<path d="M${n(a)} ${bracketY - 10}V${bracketY + 10}M${n(b)} ${bracketY - 10}V${bracketY + 10}M${n(a)} ${bracketY}H${n(b)}" stroke="${C.predict}" stroke-width="2" fill="none"/>`;
     s += '</g>';
-    if (current) s += txt(Math.max(left + 6, a), bracketY - 16, 'predicted arrival', note(C.predict));
+    // Labeled only for the first request (by then the bracket is familiar), centered over the range.
+    if (current && p.index === 0) {
+      const hw = 'predicted arrival'.length * noteFs * .29;
+      s += txt(Math.min(Math.max((a + b) / 2, left + 6 + hw), W - 8 - hw), bracketY - 16, 'predicted arrival', `text-anchor="middle" ${note(C.predict)}`);
+    }
   }
   // Work starts at arrival and grows up to NOW until it finishes. After a late wake its first part runs
   // at reduced frequency (hatched), so it takes longer.
@@ -89,14 +105,16 @@ function draw() {
     const a = X(e.start), b = X(upTo(e.end)), mid = e.slowEnd ? X(upTo(e.slowEnd)) : a; if (b < left) continue;
     if (e.slowEnd && mid > a) s += `<rect x="${n(a)}" y="${workY}" width="${n(mid - a + (b > mid ? 4 : 0))}" height="${workH}" rx="4" fill="url(#slow)" stroke="${C.late}" stroke-width="1.5"/>`;
     if (b > mid) s += `<rect x="${n(mid)}" y="${workY}" width="${n(b - mid)}" height="${workH}" rx="4" fill="${C.ink}"/>`;
-    // Labeled only for the current request, until the GPU starts to ramp down.
-    if (e.index === game.index && ['queue', 'work'].includes(game.phase))
-      s += txt(Math.max(left + 6, a), workY - 8, e.match ? '✓ Ready in time' : 'Reduced frequency · slower', note(e.match ? C.you : C.late));
+    // Work is labeled for the current request, until the GPU starts to ramp down.
+    if (e.index === game.index && ['queue', 'work'].includes(game.phase)) {
+      const label = e.match ? '✓ Ready' : 'Slow down at reduced frequency!';
+      s += txt(fit(Math.max(left + 6, a), label), workY - 8, label, note(e.match ? C.you : C.late));
+    }
   }
-  // Each arrival appears only once it happens: a line from the start of work up into the prediction row.
+  // Each arrival appears only once it happens: a line from the start of work up into the prediction row
+  // (the frequency row stays clear).
   for (const a of game.arrivals) {
     const x = X(a.t); if (x < left - 8) continue;
-    s += `<line x1="${n(x)}" x2="${n(x)}" y1="${workY + workH}" y2="${low}" stroke="${C.axis}" stroke-dasharray="2 4"/>`;
     s += `<line x1="${n(x)}" x2="${n(x)}" y1="${workY + workH}" y2="${bracketY - 12}" stroke="${C.ink}" stroke-width="2" stroke-linecap="round"/>`;
     s += `<circle cx="${n(x)}" cy="${bracketY}" r="4" fill="${C.ink}" stroke="#fff" stroke-width="1.5"/>`;
   }
@@ -120,21 +138,34 @@ function draw() {
     if (!STATE_NOTE[st] || trail[i - 1].state === st) continue;
     let j = i; while (j + 1 < trail.length && trail[j + 1].state === st) j++;
     if (X(trail[j].t) < left) continue;
-    if (st === 'burn' && trail[j].t - trail[i].t < LONG_BURN_S) continue;  // short premature wakes: red line only
-    if (st === 'fall' && (game.state !== 'fall' || j !== trail.length - 1)) continue;  // only during the ramp down
-    // Premature-wake and late-wake notes belong to the current request and disappear once the ramp down starts.
-    if (st !== 'fall' && (trail[i].index !== game.index || !['waiting', 'queue', 'work'].includes(game.phase))) continue;
-    // Above the high line (clear of the GPU marker); the drop-back note sits past the marker, between
-    // the high and low lines, so the marker parked at Low never covers it.
-    const x = st === 'fall' ? X(trail[i].t) + 44 : Math.max(left + 8, X(trail[i].t));
-    const label = small && st === 'fall' ? 'Back to low power' : STATE_NOTE[st];  // fits a phone's narrow future area
-    s += txt(x, st === 'fall' ? (high + low) / 2 + 2 : high - 24, label, note(STATE_COLOR[st]));
+    // "Too early" once the wait at high frequency is longer than a good wake allows (game.tooEarly).
+    if (st === 'burn' && trail[j].t - trail[i].t <= GOOD_SCREEN_S) continue;  // trail times are on-screen seconds
+    // Notes belong to the current request and disappear once the ramp down starts. Above the high
+    // line, clear of the GPU marker.
+    if (trail[i].index !== game.index || !['waiting', 'queue', 'work'].includes(game.phase)) continue;
+    s += txt(fit(Math.max(left + 8, X(trail[i].t)), STATE_NOTE[st]), high - 24, STATE_NOTE[st], note(STATE_COLOR[st]));
   }
 
   s += `<line x1="${n(nowX)}" x2="${n(nowX)}" y1="${top}" y2="${bottom}" stroke="${C.axis}" stroke-dasharray="3 5"/>`;
   const gy = Y(game.height);
   s += `<rect x="${n(nowX - 18)}" y="${n(gy - 18)}" width="36" height="36" rx="8" fill="${STATE_COLOR[game.state]}" stroke="#fff" stroke-width="2"/>`;
   s += txt(nowX, gy + 4, 'GPU', `text-anchor="middle" fill="#fff" font-size="10" font-weight="800"`);
+  // Bonus: the timing text floats up from the marker and fades. A perfect wake also gets a ring and sparkles
+  // and a bigger pop; a good wake a smaller pop (text only, no pop, with reduced motion).
+  const hit = game.arrivals.at(-1), kind = bonusOf(hit), p = kind ? (game.visual - hit.t) / BONUS_S : 1;
+  if (p >= 0 && p < 1) {
+    const fade = 1 - p * p;
+    if (kind === 'perfect' && !reducedMotion.matches) {
+      s += `<circle cx="${n(nowX)}" cy="${n(gy)}" r="${n(20 + 34 * p)}" fill="none" stroke="${C.you}" stroke-width="${n(1 + 3 * (1 - p))}" opacity="${n(1 - p)}"/>`;
+      for (let k = 0; k < 8; k++) {
+        const ang = k * Math.PI / 4 + Math.PI / 8, r0 = 24 + 26 * p, r1 = r0 + 7;
+        s += `<line x1="${n(nowX + r0 * Math.cos(ang))}" y1="${n(gy + r0 * Math.sin(ang))}" x2="${n(nowX + r1 * Math.cos(ang))}" y2="${n(gy + r1 * Math.sin(ang))}" stroke="${C.you}" stroke-width="2.5" stroke-linecap="round" opacity="${n(fade)}"/>`;
+      }
+    }
+    // The text pops: grows (1.4x perfect, 1.2x good) and back to note size over the first half, then fades.
+    const k = reducedMotion.matches ? 1 : 1 + (kind === 'perfect' ? .4 : .2) * Math.sin(Math.PI * Math.min(1, p / .5));
+    s += `<text transform="translate(${n(nowX)} ${n(gy - 30 - 18 * p)}) scale(${k.toFixed(3)})" text-anchor="middle" ${note(C.you)} opacity="${n(fade)}">${BONUS[kind]}</text>`;
+  }
   s += '</g>';
   s += txt(nowX, bottom + 18, 'NOW', `text-anchor="middle" fill="${C.muted}" font-size="${noteFs}" font-weight="650" letter-spacing="1.5"`);
   s += '</svg>';
@@ -152,17 +183,35 @@ function finish() {
   $('headline').focus({ preventScroll: true });
 }
 
-function activate() { const before = game.phase; game.action(); if (before !== game.phase) last = null; update(); draw(); }
+function activate() {
+  sound.start();
+  if (game.canJump) sound.cue('jump');  // the wake press itself
+  const before = game.phase; game.action(); if (before !== game.phase) last = null; update(); draw();
+}
+
+// One sound per outcome, as it happens: perfect, good or too late on arrival, too early once the wait at
+// high frequency runs past a good wake. Restarts with a replay (the arrivals list empties).
+let cued = 0, earlyCued = -1;
+function cues() {
+  if (game.arrivals.length < cued) { cued = 0; earlyCued = -1; }
+  while (cued < game.arrivals.length) { const a = game.arrivals[cued++]; if (a.perfect) sound.cue('perfect'); else if (a.good) sound.cue('good'); else if (!a.match) sound.cue('late'); }
+  if (game.tooEarly && earlyCued !== game.index) { earlyCued = game.index; sound.cue('early'); }
+}
+const soundButton = $('sound');
+// The music button is an icon only: blue when sound is on, grey when off (the default).
+const showSound = () => { const on = !sound.isMuted(); soundButton.setAttribute('aria-pressed', String(on)); soundButton.title = on ? 'Sound on' : 'Sound off'; };
+soundButton.addEventListener('click', () => { sound.setMuted(!sound.isMuted()); if (!sound.isMuted()) sound.start(); showSound(); });
+showSound();
 $('action').addEventListener('click', activate);
 $('replay').addEventListener('click', activate);
 document.addEventListener('keydown', e => {
   if (e.code !== 'Space' || e.altKey || e.ctrlKey || e.metaKey || e.target.closest?.('details')) return;
   e.preventDefault(); if (!e.repeat) activate();
 });
-document.addEventListener('visibilitychange', () => { last = null; });
+document.addEventListener('visibilitychange', () => { last = null; sound.pause(document.hidden); });
 function frame(ts) {
   const dt = last == null || document.hidden ? 0 : Math.min(.05, (ts - last) / 1000); last = ts;
-  game.step(dt);
+  game.step(dt); cues();
   if (ts - lastDraw > 30) { update(); draw(); lastDraw = ts; }
   requestAnimationFrame(frame);
 }

@@ -27,6 +27,12 @@ h2:focus { outline: none; } /* focused only programmatically, for screen readers
 .game-panel { border: 1px solid var(--rule); border-radius: 20px; background: var(--paper); padding: 20px 24px; }
 .hud { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--rule);
   font-size: 12px; font-weight: 650; letter-spacing: .04em; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* Sound toggle in the HUD: a round music-note icon, blue when on, grey when off. */
+.hud .sound-toggle { flex: none; width: 36px; min-width: 0; height: 36px; min-height: 0; margin: 0; padding: 0; border: 1px solid var(--rule); border-radius: 50%;
+  background: transparent; color: var(--you); }
+.hud .sound-toggle svg { width: 18px; height: 18px; }
+.hud .sound-toggle[aria-pressed='false'] { color: #a3a99c; }
+.hud .sound-toggle:hover { border-color: var(--muted); }
 .scene { width: 100%; overflow: hidden; margin-top: 8px; }
 .scene svg { display: block; width: 100%; font-family: inherit; }
 

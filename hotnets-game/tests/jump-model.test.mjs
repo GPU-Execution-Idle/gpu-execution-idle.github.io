@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { DATA } from '../web/data.js';
-import { JumpGame, predictionRange, WORK_SECONDS, REACTION_S, RAMP_SECONDS, MIN_SLOW_SECONDS } from '../web/jump-model.js';
+import { JumpGame, predictionRange, WORK_SECONDS, RAMP_SECONDS, reactionS, perfectS, goodS, waitSpeed } from '../web/jump-model.js';
 import { evaluate, gaps } from '../web/sim.js';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
 const until=(g,p)=>{for(let n=0;n<10000;n++){if(p())return;g.step(.02);}throw new Error('State deadline');};
@@ -26,15 +26,31 @@ const late=new JumpGame(DATA);until(late,()=>late.phase==='queue');const ev=late
 until(late,()=>late.phase==='work');assert.equal(late.events.length,1,'late work is not pushed twice');
 // Waking on arrival must stay the most energy-saving strategy (it only costs latency), as in the measured runs.
 {const R=evaluate(DATA,'reactive'),G=gaps(DATA);for(let i=0;i<G.length;i++)for(let lead=.01;lead<=4;lead+=.01){const w=Array(G.length).fill(null);w[i]=G[i].arrival-lead;assert.ok(evaluate(DATA,'player',w).energy>=R.energy-1e-9,`wake ${lead.toFixed(2)} s early in wait ${i} beats reactive`);}}
-// Pressing at, or up to REACTION_S after, the start of every bracket is always in time.
-for(const late of [0,.25,REACTION_S-.02]){const s=new JumpGame(DATA);for(let n=0;n<20000&&s.phase!=='results';n++){if(s.phase==='between')s.action();if(s.canJump&&s.now>=s.range.wakeFrom+late-1e-9)s.action();s.step(.01);}
-assert.equal(s.phase,'results');assert.equal(s.totals.player.readyOnTime,5,`press ${late} s after bracket start must be in time for every request`);assert.equal(s.totals.player.addedS,0);}
+// Pressing at, or up to reactionS(i) after, the start of every bracket is always in time (the allowance scales with each request's wait speed).
+for(const frac of [0,.5,.96]){const s=new JumpGame(DATA);for(let n=0;n<20000&&s.phase!=='results';n++){if(s.phase==='between')s.action();if(s.canJump&&s.now>=s.range.wakeFrom+frac*reactionS(s.index)-1e-9)s.action();s.step(.01);}
+assert.equal(s.phase,'results');assert.equal(s.totals.player.readyOnTime,5,`press ${frac} of the allowance after bracket start must be in time for every request`);assert.equal(s.totals.player.addedS,0);}
 // A ramp cut short by an arrival keeps its slope: the same height per second before and after the work arrives.
 {const s=new JumpGame(DATA);until(s,()=>s.now>=s.gap.arrival-.16);s.action();until(s,()=>s.height>.1);const h0=s.height;s.step(.02);const before=(s.height-h0)/.02;
 until(s,()=>s.phase==='queue');const h1=s.height;s.step(.02);const after=(s.height-h1)/.02;near(before,1/RAMP_SECONDS);near(after,1/RAMP_SECONDS);
-const ev=s.events.at(-1);assert.ok(ev.slowEnd-ev.start>=MIN_SLOW_SECONDS-1e-9,'reduced-frequency part lasts at least MIN_SLOW_SECONDS');}
-// A press only slightly too late (ramp nearly done at arrival) still leaves a visible reduced-frequency part.
-{const s=new JumpGame(DATA);until(s,()=>s.now>=s.gap.arrival-.30);s.action();until(s,()=>s.phase==='queue');const ev=s.events.at(-1);near(ev.slowEnd-ev.start,MIN_SLOW_SECONDS);}
+const ev=s.events.at(-1);near(ev.slowEnd-ev.start,s.gap.delay/waitSpeed(0));}
+// A press only slightly too late (ramp nearly done at arrival): its reduced-frequency part is to scale too, just short.
+{const s=new JumpGame(DATA);until(s,()=>s.now>=s.gap.arrival-.30);s.action();until(s,()=>s.phase==='queue');const ev=s.events.at(-1);assert.ok(s.gap.delay>0);near(ev.slowEnd-ev.start,s.gap.delay/waitSpeed(0));}
+// Graded wakes: perfect (at most perfectS), good (at most goodS), otherwise too early; each arrival is exactly one.
+for(const [lead,want] of [[DATA.wakeLeadS+.1,'perfect'],[DATA.wakeLeadS+(perfectS(0)+goodS(0))/2,'good'],[DATA.wakeLeadS+goodS(0)+.5,'early'],[.1,'late']]){const s=new JumpGame(DATA);until(s,()=>s.now>=s.gap.arrival-lead);s.action();until(s,()=>s.arrivals.length===1);const a=s.arrivals[0];
+const got=a.perfect?'perfect':a.good?'good':a.match?'early':'late';assert.equal(got,want,`press ${lead} s before arrival`);}
+// "Perfect" wake: ready in time and at most perfectS(0) at high frequency before arrival; an early press is in time but not perfect.
+for(const [lead,perfect] of [[DATA.wakeLeadS+.1,true],[DATA.wakeLeadS+perfectS(0)+1,false],[.1,false]]){const s=new JumpGame(DATA);until(s,()=>s.now>=s.gap.arrival-lead);s.action();until(s,()=>s.arrivals.length===1);assert.equal(s.arrivals[0].perfect,perfect,`press ${lead} s before arrival`);}
+// "Too early" starts once the wait at high frequency passes goodS(0), and never for a perfect wake.
+{const s=new JumpGame(DATA);until(s,()=>s.now>=s.gap.arrival-DATA.wakeLeadS-goodS(0)-1);s.action();assert.equal(s.tooEarly,false);until(s,()=>s.tooEarly);assert.ok(s.now-(s.wakes[0]+DATA.wakeLeadS)>goodS(0));until(s,()=>s.arrivals.length===1);assert.equal(s.arrivals[0].perfect,false);}
+{const s=new JumpGame(DATA);until(s,()=>s.now>=s.gap.arrival-DATA.wakeLeadS-.1);s.action();let early=false;until(s,()=>{early||=s.tooEarly;return s.arrivals.length===1;});assert.equal(early,false);assert.equal(s.arrivals[0].perfect,true);}
+// Slow motion during the ramp: the coming bracket keeps moving at the same screen speed relative to the scene.
+{const s=new JumpGame(DATA);const off=()=>s.predictions[0].start-s.visual;until(s,()=>s.now>=s.range.wakeFrom);let o=off(),v=s.visual;s.step(.02);const before=(off()-o)/(s.visual-v);
+s.action();s.step(.02);o=off();v=s.visual;s.step(.02);assert.equal(s.state,'ramp');const during=(off()-o)/(s.visual-v);near(before,-1);near(during,-1);}
+// Every wake draws the same slope: a whole ramp spans L / waitSpeed of screen time, in time (press) or late (no press).
+{const span=(s)=>{const v0=s.visual;until(s,()=>s.height>=1);return s.visual-v0;},close=(a,b)=>assert.ok(Math.abs(a-b)<.01,`${a} vs ${b}`);
+const ontime=new JumpGame(DATA);until(ontime,()=>ontime.now>=ontime.range.wakeFrom);ontime.action();close(span(ontime),DATA.wakeLeadS/waitSpeed(0));
+const late=new JumpGame(DATA);until(late,()=>late.phase==='queue');close(span(late),DATA.wakeLeadS/waitSpeed(0));
+until(late,()=>late.phase==='fall');const v0=late.visual;until(late,()=>late.height===0);assert.ok(Math.abs(late.visual-v0-DATA.wakeLeadS/waitSpeed(0))<=.02+1e-9,'ramp down spans a ramp up (within one .02 s step)');}
 // The frequency line must always reach back past the visible window (it used to break once its first point aged out).
 {const s=new JumpGame(DATA);for(let n=0;n<4000&&s.phase!=='results';n++){if(s.phase==='between')s.action();s.step(.02);assert.ok(s.trail[0].t<=s.visual-20,`trail starts at ${s.trail[0].t} at visual ${s.visual}`);}}
-console.log('PASS: trail always reaches the left edge; bracket-start press always in time; reactive is the energy minimum; late work starts at arrival with a reduced-frequency part; causal rolling range; every segment arrival inside its range; 16-interval cap; ramp and single press; persistent prediction history; work duration; exactly one pause; continuous remaining four requests; late/partial wake; a cut-short ramp keeps its slope; reduced-frequency part at least 0.8 s; automatic results; replay.');
+console.log('PASS: trail always reaches the left edge; bracket-start press always in time; reactive is the energy minimum; late work starts at arrival with a reduced-frequency part; causal rolling range; every segment arrival inside its range; 16-interval cap; ramp and single press; persistent prediction history; work duration; exactly one pause; continuous remaining four requests; late/partial wake; a cut-short ramp keeps its slope; reduced-frequency part to scale (added latency / wait speed); perfect / good / too early grades; too early only past good; slow motion keeps the bracket moving; every wake draws the same slope, up and down; automatic results; replay.');
