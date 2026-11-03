@@ -1,8 +1,9 @@
 import { evaluate, evaluateAll } from './sim.js';
 
-export const RAMP_SECONDS = 1.1;
+export const RAMP_SECONDS = 1.1;  // a whole Low-to-High ramp on screen; a ramp cut short by arrival keeps this rate
 export const WORK_SECONDS = 3.2;
 export const FALL_SECONDS = .65;
+export const MIN_SLOW_SECONDS = .8;  // the reduced-frequency (hatched) part of late work lasts at least this long on screen
 export const REACTION_S = .5;  // how late after the bracket starts a press may come and still be in time (waits play at 1x)
 
 // Linear-interpolation percentile (same as tools/build_data.py).
@@ -57,8 +58,10 @@ export class JumpGame {
     this.age = 0; this.arrivalHeight = this.height;
     if (this.gap.delay > 0) {
       // A late wake does not postpone the work: it starts at arrival and runs at reduced frequency
-      // while the clocks ramp up ('queue' phase), so the work takes longer.
-      const slow = Math.max(RAMP_SECONDS, this.gap.delay);
+      // while the clocks finish ramping up ('queue' phase), so the work takes longer. The ramp keeps
+      // its rate, so only the part still to go is drawn (a whole ramp when there was no press); the
+      // reduced-frequency part lasts at least MIN_SLOW_SECONDS so a slightly late press stays visible.
+      const slow = this.slowS = Math.max(MIN_SLOW_SECONDS, (1 - this.arrivalHeight) * RAMP_SECONDS);
       this.phase = 'queue';
       this.events.push({start:this.visual, slowEnd:this.visual + slow, end:this.visual + slow + WORK_SECONDS, match:false, index:this.index});
     } else this.work();
@@ -86,8 +89,8 @@ export class JumpGame {
       if (this.now >= this.gap.arrival) this.arrive();
     } else if (this.phase === 'queue') {
       this.age += dt;
-      const f = Math.min(1, this.age / Math.max(RAMP_SECONDS, this.gap.delay));
-      this.height = this.arrivalHeight + (1 - this.arrivalHeight) * f;
+      const f = Math.min(1, this.age / this.slowS);
+      this.height = Math.min(1, this.arrivalHeight + this.age / RAMP_SECONDS);
       this.now = this.gap.arrival + this.gap.delay * f;
       if (f === 1) this.work();
     } else if (this.phase === 'work') {

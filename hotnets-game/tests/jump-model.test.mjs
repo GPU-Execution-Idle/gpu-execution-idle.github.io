@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { DATA } from '../web/data.js';
-import { JumpGame, predictionRange, WORK_SECONDS, REACTION_S } from '../web/jump-model.js';
+import { JumpGame, predictionRange, WORK_SECONDS, REACTION_S, RAMP_SECONDS, MIN_SLOW_SECONDS } from '../web/jump-model.js';
 import { evaluate, gaps } from '../web/sim.js';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
 const until=(g,p)=>{for(let n=0;n<10000;n++){if(p())return;g.step(.02);}throw new Error('State deadline');};
@@ -29,6 +29,12 @@ until(late,()=>late.phase==='work');assert.equal(late.events.length,1,'late work
 // Pressing at, or up to REACTION_S after, the start of every bracket is always in time.
 for(const late of [0,.25,REACTION_S-.02]){const s=new JumpGame(DATA);for(let n=0;n<20000&&s.phase!=='results';n++){if(s.phase==='between')s.action();if(s.canJump&&s.now>=s.range.wakeFrom+late-1e-9)s.action();s.step(.01);}
 assert.equal(s.phase,'results');assert.equal(s.totals.player.readyOnTime,5,`press ${late} s after bracket start must be in time for every request`);assert.equal(s.totals.player.addedS,0);}
+// A ramp cut short by an arrival keeps its slope: the same height per second before and after the work arrives.
+{const s=new JumpGame(DATA);until(s,()=>s.now>=s.gap.arrival-.16);s.action();until(s,()=>s.height>.1);const h0=s.height;s.step(.02);const before=(s.height-h0)/.02;
+until(s,()=>s.phase==='queue');const h1=s.height;s.step(.02);const after=(s.height-h1)/.02;near(before,1/RAMP_SECONDS);near(after,1/RAMP_SECONDS);
+const ev=s.events.at(-1);assert.ok(ev.slowEnd-ev.start>=MIN_SLOW_SECONDS-1e-9,'reduced-frequency part lasts at least MIN_SLOW_SECONDS');}
+// A press only slightly too late (ramp nearly done at arrival) still leaves a visible reduced-frequency part.
+{const s=new JumpGame(DATA);until(s,()=>s.now>=s.gap.arrival-.30);s.action();until(s,()=>s.phase==='queue');const ev=s.events.at(-1);near(ev.slowEnd-ev.start,MIN_SLOW_SECONDS);}
 // The frequency line must always reach back past the visible window (it used to break once its first point aged out).
 {const s=new JumpGame(DATA);for(let n=0;n<4000&&s.phase!=='results';n++){if(s.phase==='between')s.action();s.step(.02);assert.ok(s.trail[0].t<=s.visual-20,`trail starts at ${s.trail[0].t} at visual ${s.visual}`);}}
-console.log('PASS: trail always reaches the left edge; bracket-start press always in time; reactive is the energy minimum; late work starts at arrival with a reduced-frequency part; causal rolling range; every segment arrival inside its range; 16-interval cap; ramp and single press; persistent prediction history; work duration; exactly one pause; continuous remaining four requests; late/partial wake; automatic results; replay.');
+console.log('PASS: trail always reaches the left edge; bracket-start press always in time; reactive is the energy minimum; late work starts at arrival with a reduced-frequency part; causal rolling range; every segment arrival inside its range; 16-interval cap; ramp and single press; persistent prediction history; work duration; exactly one pause; continuous remaining four requests; late/partial wake; a cut-short ramp keeps its slope; reduced-frequency part at least 0.8 s; automatic results; replay.');
