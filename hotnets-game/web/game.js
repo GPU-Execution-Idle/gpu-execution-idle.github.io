@@ -102,11 +102,19 @@ function draw() {
   }
 
   // Frequency trail: black by default, colored and annotated where it burns energy, hurts latency or drops back.
+  // One polyline per run of the same color, each starting at the previous run's last point. Not one path per
+  // frame: on phones a frame's step is a fraction of a pixel, and WebKit (iPhone Safari and Chrome) drew those
+  // thousands of tiny, often zero-length paths with gaps.
   const trail = game.trail;
+  let d = '', color = null, prev = '';
+  const flush = () => { if (d) s += `<path d="${d}" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`; };
   for (let i = 1; i < trail.length; i++) {
     const a = trail[i - 1], b = trail[i]; if (X(b.t) < left) continue;
-    s += `<path d="M${n(X(a.t))} ${n(Y(a.h))}L${n(X(b.t))} ${n(Y(b.h))}" stroke="${STATE_COLOR[b.state ?? 'idle']}" stroke-width="3" stroke-linecap="round" fill="none"/>`;
+    const c = STATE_COLOR[b.state ?? 'idle'], pt = `${n(X(b.t))} ${n(Y(b.h))}`;
+    if (c !== color) { flush(); color = c; d = `M${n(X(a.t))} ${n(Y(a.h))}`; prev = ''; }
+    if (pt !== prev) { d += `L${pt}`; prev = pt; }
   }
+  flush();
   for (let i = 1; i < trail.length; i++) {
     const st = trail[i].state;
     if (!STATE_NOTE[st] || trail[i - 1].state === st) continue;
